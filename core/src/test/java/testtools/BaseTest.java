@@ -3,8 +3,6 @@ package testtools;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
 
@@ -13,7 +11,6 @@ import timber.log.Timber;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-@RunWith(MockitoJUnitRunner.class)
 public class BaseTest {
     List<Throwable> uncaughtExceptions;
 

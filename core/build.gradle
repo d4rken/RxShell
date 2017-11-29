@@ -1,4 +1,16 @@
+plugins {
+    id "com.github.dcendents.android-maven" version "2.0"
+    id "com.jfrog.bintray" version "1.8.0"
+    id "jacoco"
+    id "com.github.kt3k.coveralls" version "2.8.2"
+}
 apply plugin: 'com.android.library'
+
+def versionMajor = 1
+def versionMinor = 0
+def versionPatch = 0
+def myVersionCode = versionMajor * 10000 + versionMinor * 100 + versionPatch
+def myVersionName = "${versionMajor}.${versionMinor}.${versionPatch}"
 
 android {
     compileOptions {
@@ -8,20 +20,19 @@ android {
 
     compileSdkVersion 27
 
-    def versionMajor = 1
-    def versionMinor = 0
-    def versionPatch = 0
-
     defaultConfig {
         minSdkVersion 16
         targetSdkVersion 27
-        versionCode versionMajor * 10000 + versionMinor * 100 + versionPatch
-        versionName "${versionMajor}.${versionMinor}.${versionPatch}"
+        versionCode myVersionCode
+        versionName myVersionName
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
+        debug {
+            testCoverageEnabled = true
+        }
         release {
         }
     }
@@ -40,4 +51,59 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:2.8.9'
     testImplementation 'org.awaitility:awaitility:3.0.0'
+}
+
+task jacocoTestReport(type: JacocoReport, dependsOn: "testDebugUnitTest") {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+    classDirectories = fileTree(
+            dir: './build/intermediates/classes/debug',
+            excludes: ['eu/darken/R*.class',
+                       '**/BuildConfig.class'
+            ])
+    sourceDirectories = files([
+            'src/main/java',
+    ])
+    executionData = files('build/jacoco/testDebugUnitTest.exec')
+}
+
+coveralls {
+    sourceDirs = ['src/main/java']
+}
+
+def credentialsFile = new File(System.properties['user.home'], ".bintray/bintray.properties")
+ext {
+    if (credentialsFile.canRead()) {
+        Properties props = new Properties()
+        props.load(new FileInputStream(credentialsFile))
+        bintrayUser = props['bintray.user']
+        bintrayApiKey = props['bintray.apikey']
+    }
+
+    bintrayRepo = 'maven'
+    bintrayName = 'rxshell'
+
+    publishedGroupId = 'eu.darken.rxshell'
+    libraryName = 'RxShell'
+    artifact = 'core'
+
+    libraryDescription = 'Android shells with RxJava support.'
+
+    siteUrl = 'https://github.com/d4rken/RxShell'
+    gitUrl = 'https://github.com/d4rken/RxShell.git'
+
+    libraryVersion = myVersionName
+
+    developerId = 'darken'
+    developerName = 'Matthias Urhahn'
+    developerEmail = 'darken@darken.eu'
+
+    licenseName = 'Apache-2.0'
+    licenseUrl = 'https://github.com/d4rken/RxShell/blob/master/LICENSE'
+    allLicenses = ["Apache-2.0"]
+}
+if (credentialsFile.canRead()) {
+    apply from: '../publish-to-bintray.gradle'
 }
