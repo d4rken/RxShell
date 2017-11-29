@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Shell Helper Example</string>
+    <string name="run">Run</string>
 </resources>

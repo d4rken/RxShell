@@ -1,4 +1,4 @@
-package eu.darken.shellhelperexample;
+package eu.darken.rxshellexample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -18,7 +18,6 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.output) TextView output;
     @BindView(R.id.input) TextView input;
     @BindView(R.id.execute) Button execute;
-    private RxCmdShell rxCommandShell;
     private RxCmdShell.Session session;
 
 
@@ -28,16 +27,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
         execute.setVisibility(View.INVISIBLE);
-
-
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        rxCommandShell = RxCmdShell.builder().build();
+        RxCmdShell rxCommandShell = RxCmdShell.builder().build();
         rxCommandShell.open()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(session -> {
@@ -65,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         session.close()
+                .doOnSubscribe(d -> session = null)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(i -> execute.setVisibility(View.INVISIBLE));
     }

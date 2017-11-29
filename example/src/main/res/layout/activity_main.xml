@@ -6,8 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
-    tools:context="eu.darken.shellhelperexample.MainActivity">
-
+    tools:context="eu.darken.rxshellexample.MainActivity">
 
     <Button
         android:id="@+id/execute"
@@ -16,9 +15,9 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Run"
+        android:text="@string/run"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>"/>
+        app:layout_constraintTop_toTopOf="parent"/>
 
     <EditText
         android:id="@+id/input"
@@ -32,7 +31,8 @@
         android:text="uname -a"
         app:layout_constraintEnd_toStartOf="@+id/execute"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="HardcodedText"/>
 
     <TextView
         android:id="@+id/output"

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:tools="http://schemas.android.com/tools"
-          package="eu.darken.shellhelperexample"
+          package="eu.darken.rxshellexample"
           xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
@@ -11,7 +11,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".MainActivity">
+        <activity android:name="eu.darken.rxshellexample.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
