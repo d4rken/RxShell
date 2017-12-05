@@ -1,5 +1,6 @@
 package eu.darken.rxshell.cmd;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -13,6 +14,7 @@ import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
+import io.reactivex.SingleOnSubscribe;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.BehaviorSubject;
@@ -31,7 +33,7 @@ public class CmdProcessor {
     }
 
     public Single<Cmd.Result> submit(Cmd cmd) {
-        return Single.create(emitter -> {
+        return Single.create((SingleOnSubscribe<Cmd.Result>) emitter -> {
             QueueCmd item = new QueueCmd(cmd, emitter);
             synchronized (CmdProcessor.this) {
                 if (dead) {
@@ -43,7 +45,7 @@ public class CmdProcessor {
                     cmdQueue.add(item);
                 }
             }
-        });
+        }).doOnSuccess(item -> { if (RXSDebug.isDebug()) Timber.tag(TAG).i("Processed: %s", item); });
     }
 
     public synchronized void attach(RxShell.Session session) {
@@ -82,7 +84,6 @@ public class CmdProcessor {
                             .compose(upstream -> factory.create(upstream, item.cmd, Harvester.Type.OUTPUT))
                             .onErrorReturnItem(new Harvester.Batch(Cmd.ExitCode.SHELL_DIED, null))
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("outputLine():doOnEach: %s", n); })
-                            .doOnTerminate(() -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("outputLine():doOnTerminate"); })
                             .toObservable().cache();
                     outputs.subscribe(s -> {}, e -> {});
 
@@ -90,19 +91,20 @@ public class CmdProcessor {
                             .compose(upstream -> factory.create(upstream, item.cmd, Harvester.Type.ERROR))
                             .onErrorReturnItem(new Harvester.Batch(Cmd.ExitCode.SHELL_DIED, null))
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("errorLines():doOnEach: %s", n); })
-                            .doOnTerminate(() -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("errorLines():doOnTerminate"); })
                             .toObservable().cache();
                     errors.subscribe(s -> {}, e -> {});
 
-                    for (String write : item.cmd.getCommands()) session.writeLine(write, false);
+                    try {
+                        for (String write : item.cmd.getCommands()) session.writeLine(write, false);
+                        session.writeLine("echo " + item.cmd.getMarker() + " $?", false);
+                        session.writeLine("echo " + item.cmd.getMarker() + " >&2", true);
+                    } catch (IOException e) {
+                        return Observable.just(item.exitCode(Cmd.ExitCode.SHELL_DIED));
+                    }
 
-                    session.writeLine("echo " + item.cmd.getMarker() + " $?", false);
-                    session.writeLine("echo " + item.cmd.getMarker() + " >&2", true);
-
-                    Observable<QueueCmd> zip = Observable.zip(outputs, errors, (out, err) -> item.exitCode(out.exitCode).output(out.buffer).errors(err.buffer));
-
+                    Observable<QueueCmd> harvestZipper = Observable.zip(outputs, errors, (out, err) -> item.exitCode(out.exitCode).output(out.buffer).errors(err.buffer));
                     if (item.cmd.getTimeout() > 0) {
-                        zip = zip.timeout(item.cmd.getTimeout(), TimeUnit.MILLISECONDS).onErrorReturn(error -> {
+                        harvestZipper = harvestZipper.timeout(item.cmd.getTimeout(), TimeUnit.MILLISECONDS).onErrorReturn(error -> {
                             if (error instanceof TimeoutException) {
                                 if (RXSDebug.isDebug()) Timber.tag(TAG).w("Command timed out: %s", item);
                                 return item.exitCode(Cmd.ExitCode.TIMEOUT);
@@ -111,9 +113,8 @@ public class CmdProcessor {
                             }
                         });
                     }
-                    return zip;
+                    return harvestZipper;
                 })
-                .doOnNext(item -> { if (RXSDebug.isDebug()) Timber.tag(TAG).i("Processed: %s", item); })
                 .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).d("Post zip: %s", n); })
                 .doAfterTerminate(() -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("Processor terminated."); })
                 .subscribe(new Observer<QueueCmd>() {
