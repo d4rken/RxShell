@@ -84,7 +84,6 @@ public class RxCmdShell {
                         }
                     }))
                     .subscribeOn(Schedulers.io())
-                    .doOnSubscribe(d -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("open():doOnSubscribe %s", d);})
                     .doOnSuccess(s -> {
                         if (RXSDebug.isDebug()) Timber.tag(TAG).v("open():doOnSuccess %s", s);
                         s.waitFor().subscribe(integer -> {
@@ -94,7 +93,6 @@ public class RxCmdShell {
                         }, e -> Timber.tag(TAG).w(e, "Error resetting session."));
                     })
                     .doOnError(t -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v(t, "open():doOnError");})
-                    .doFinally(() -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("open():doFinally");})
                     .cache();
         }
         return session;
@@ -219,16 +217,9 @@ public class RxCmdShell {
                 shellEnvironment(envVars.getEnvironmentVariables(useRoot));
             }
             if (rxShell == null) {
-                ProcessFactory processFactory = new DefaultProcessFactory();
-                ProcessKiller processKiller;
-                String command;
-                if (useRoot) {
-                    processKiller = new RootKiller(processFactory);
-                    command = "su";
-                } else {
-                    processKiller = new UserKiller();
-                    command = "sh";
-                }
+                final ProcessFactory processFactory = new DefaultProcessFactory();
+                final ProcessKiller processKiller = useRoot ? new RootKiller(processFactory) : new UserKiller();
+                final String command = useRoot ? "su" : "sh";
                 rxShell = new RxShell(new RxProcess(processFactory, processKiller, command));
             }
             return new RxCmdShell(this);
