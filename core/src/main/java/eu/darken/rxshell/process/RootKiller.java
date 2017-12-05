@@ -47,7 +47,13 @@ public class RootKiller implements ProcessKiller {
 
         if (RXSDebug.isDebug()) Timber.tag(TAG).d("Related pids: %s", allRelatedPids);
 
-        return allRelatedPids != null && destroyPids(allRelatedPids);
+        if (allRelatedPids != null && destroyPids(allRelatedPids)) {
+            return true;
+        } else {
+            if (RXSDebug.isDebug()) Timber.tag(TAG).w("Couldn't destroy process via root shell, trying Process.destroy()");
+            process.destroy();
+            return false;
+        }
     }
 
     static Single<List<String>> makeMiniHarvester(InputStream inputStream) {
