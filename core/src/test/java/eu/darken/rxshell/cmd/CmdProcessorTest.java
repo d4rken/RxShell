@@ -31,6 +31,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -77,6 +80,24 @@ public class CmdProcessorTest extends BaseTest {
         order.verify(session).writeLine("error berry", false);
         order.verify(session).writeLine("echo " + cmd.getMarker() + " $?", false);
         order.verify(session).writeLine("echo " + cmd.getMarker() + " >&2", true);
+
+        assertThat(mockSession.getOutputPub().hasSubscribers(), is(false));
+        assertThat(mockSession.getErrorPub().hasSubscribers(), is(false));
+    }
+
+    @Test
+    public void testCommand_input_error() throws IOException {
+        processor.attach(session);
+        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
+        doThrow(new IOException()).when(session).writeLine(anyString(), anyBoolean());
+
+        Cmd cmd = Cmd.builder("echo straw", "error berry").build();
+        final TestObserver<Cmd.Result> observer = processor.submit(cmd).test().awaitDone(3, TimeUnit.SECONDS).assertNoTimeout();
+        final Cmd.Result result = observer.assertValueCount(1).values().get(0);
+
+        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(1);
+
+        assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
 
         assertThat(mockSession.getOutputPub().hasSubscribers(), is(false));
         assertThat(mockSession.getErrorPub().hasSubscribers(), is(false));

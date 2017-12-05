@@ -108,9 +108,7 @@ public class CmdProcessor {
                             if (error instanceof TimeoutException) {
                                 if (RXSDebug.isDebug()) Timber.tag(TAG).w("Command timed out: %s", item);
                                 return item.exitCode(Cmd.ExitCode.TIMEOUT);
-                            } else {
-                                throw new RuntimeException(error);
-                            }
+                            } else throw new RuntimeException(error);
                         });
                     }
                     return harvestZipper;
