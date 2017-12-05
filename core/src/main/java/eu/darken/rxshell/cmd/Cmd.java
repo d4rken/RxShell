@@ -100,6 +100,20 @@ public class Cmd {
             return cmd;
         }
 
+        public int getExitCode() {
+            return exitCode;
+        }
+
+        @Nullable
+        public List<String> getOutput() {
+            return output;
+        }
+
+        @Nullable
+        public List<String> getErrors() {
+            return errors;
+        }
+
         public List<String> tryGetOutput() {
             if (getOutput() == null) return new ArrayList<>();
             return getOutput();
@@ -120,20 +134,6 @@ public class Cmd {
         @Override
         public String toString() {
             return "Cmd.Result(exitcode=" + getExitCode() + ", output.size()=" + (output != null ? output.size() : null) + ", errors.size()=" + (errors != null ? errors.size() : null) + ")";
-        }
-
-        public int getExitCode() {
-            return exitCode;
-        }
-
-        @Nullable
-        public List<String> getOutput() {
-            return output;
-        }
-
-        @Nullable
-        public List<String> getErrors() {
-            return errors;
         }
     }
 

@@ -86,10 +86,8 @@ public class RxProcess {
                         }
                     })
                     .subscribeOn(Schedulers.io())
-                    .doOnSubscribe(d -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("open():doOnSubscribe %s", d);})
                     .doOnSuccess(s -> { if (RXSDebug.isDebug()) Timber.tag(TAG).d("open():doOnSuccess %s", s);})
                     .doOnError(t -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v(t, "open():doOnError");})
-                    .doFinally(() -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("open():doFinally");})
                     .cache();
         }
         return session;
@@ -123,10 +121,8 @@ public class RxProcess {
                         e.onComplete();
                     })
                     .subscribeOn(Schedulers.io())
-                    .doOnSubscribe(d -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("destroy():doOnSubscribe %s", d);})
                     .doOnComplete(() -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("destroy():doOnComplete");})
                     .doOnError(t -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v(t, "destroy():doOnError");})
-                    .doFinally(() -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("destroy():doFinally");})
                     .cache();
             this.waitFor = Single
                     .create((SingleOnSubscribe<Integer>) e -> {
@@ -136,10 +132,8 @@ public class RxProcess {
                         e.onSuccess(exitCode);
                     })
                     .subscribeOn(Schedulers.io())
-                    .doOnSubscribe(d -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("waitFor():doOnSubscribe %s", d);})
                     .doOnSuccess(s -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("waitFor():doOnSuccess %s", s);})
                     .doOnError(t -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v(t, "waitFor():doOnError");})
-                    .doFinally(() -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("waitFor():doFinally");})
                     .cache();
         }
 

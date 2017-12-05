@@ -98,6 +98,7 @@ public class Harvester extends Flowable<Harvester.Batch> implements FlowableTran
 
         @Override
         public void onNext(String line) {
+            if (RXSDebug.isDebug()) Timber.tag(tag).v(line);
             if (parse(line)) {
                 subscription.cancel();
                 customer.onNext(new Batch(exitCode, buffer));

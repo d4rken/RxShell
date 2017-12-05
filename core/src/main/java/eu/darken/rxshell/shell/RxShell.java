@@ -94,16 +94,12 @@ public class RxShell {
             this.errorKeepAlive = this.errorLines().subscribe(s -> { }, t -> Timber.w("ErrorLines KeepAlive"));
 
             this.cancel = processSession.destroy()
-                    .doOnSubscribe(d -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("cancel():doOnSubscribe %s", d);})
                     .doOnComplete(() -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("cancel():doOnComplete");})
                     .doOnError(t -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v(t, "cancel():doOnError");})
-                    .doFinally(() -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("cancel():doFinally");})
                     .cache();
             this.waitFor = processSession.waitFor()
-                    .doOnSubscribe(d -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("waitFor():doOnSubscribe %s", d);})
                     .doOnSuccess(s -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("waitFor():doOnSuccess %s", s);})
                     .doOnError(t -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v(t, "waitFor():doOnError");})
-                    .doFinally(() -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("waitFor():doFinally");})
                     .cache();
             this.close = Completable
                     .create(emitter -> {
@@ -123,10 +119,8 @@ public class RxShell {
                         outputKeepAlive.dispose();
                         errorKeepAlive.dispose();
                     })
-                    .doOnSubscribe(d -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("close():doOnSubscribe %s", d);})
                     .doOnSuccess(s -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("close():doOnSuccess %s", s);})
                     .doOnError(t -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v(t, "close():doOnError");})
-                    .doFinally(() -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("close():doFinally");})
                     .cache();
         }
 
@@ -201,9 +195,6 @@ public class RxShell {
                     }
                 }, BackpressureStrategy.MISSING)
                 .subscribeOn(Schedulers.io())
-                .doOnCancel(() -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("%s():doOnCancel()", tag);})
-                .doOnSubscribe(d -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("%s():doOnSubscribe(%s)", tag, d);})
-                .doFinally(() -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("%s():doFinally()", tag);})
                 .share();
     }
 }

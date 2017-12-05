@@ -81,20 +81,16 @@ public class CmdProcessor {
                     final Observable<Harvester.Batch> outputs = session.outputLines()
                             .compose(upstream -> factory.create(upstream, item.cmd, Harvester.Type.OUTPUT))
                             .onErrorReturnItem(new Harvester.Batch(Cmd.ExitCode.SHELL_DIED, null))
-                            .doOnSubscribe(s -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("outputLine():doOnSubscribe: %s", s); })
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("outputLine():doOnEach: %s", n); })
                             .doOnTerminate(() -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("outputLine():doOnTerminate"); })
-                            .doOnCancel(() -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("outputLine():doOnCancel"); })
                             .toObservable().cache();
                     outputs.subscribe(s -> {}, e -> {});
 
                     final Observable<Harvester.Batch> errors = session.errorLines()
                             .compose(upstream -> factory.create(upstream, item.cmd, Harvester.Type.ERROR))
                             .onErrorReturnItem(new Harvester.Batch(Cmd.ExitCode.SHELL_DIED, null))
-                            .doOnSubscribe(s -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("errorLines():doOnSubscribe: %s", s); })
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("errorLines():doOnEach: %s", n); })
                             .doOnTerminate(() -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("errorLines():doOnTerminate"); })
-                            .doOnCancel(() -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("errorLines():doOnCancel"); })
                             .toObservable().cache();
                     errors.subscribe(s -> {}, e -> {});
 
@@ -123,7 +119,6 @@ public class CmdProcessor {
                 .subscribe(new Observer<QueueCmd>() {
                     @Override
                     public void onSubscribe(Disposable d) {
-                        if (RXSDebug.isDebug()) Timber.tag(TAG).v("onSubscribe(%s)", d);
                         session.waitFor().subscribeOn(Schedulers.io()).subscribe(integer -> {
                             if (RXSDebug.isDebug()) Timber.tag(TAG).v("Attached session ended!");
                             cmdQueue.add(QueueCmd.poisonPill());

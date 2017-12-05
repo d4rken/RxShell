@@ -131,19 +131,15 @@ public class RxCmdShell {
             this.cmdProcessor = cmdProcessor;
             this.waitFor = session.waitFor().cache();
             this.cancel = session.cancel()
-                    .doOnSubscribe(d -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("cancel():doOnSubscribe %s", d); })
                     .doOnComplete(() -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("cancel():doOnComplete");})
                     .doOnError(t -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v(t, "cancel():doOnError");})
-                    .doFinally(() -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("cancel():doFinally");})
                     .cache();
             this.close = cmdProcessor.isIdle()
                     .filter(i -> i)
                     .first(true)
                     .flatMap(i -> session.close())
-                    .doOnSubscribe(d -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("close():doOnSubscribe %s", d); })
                     .doOnSuccess(s -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("close():doOnSuccess %s", s);})
                     .doOnError(t -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v(t, "close():doOnError");})
-                    .doFinally(() -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("close():doFinally");})
                     .cache();
         }
 
