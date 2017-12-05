@@ -6,8 +6,8 @@ plugins {
 }
 apply plugin: 'com.android.library'
 
-def versionMajor = 1
-def versionMinor = 0
+def versionMajor = 0
+def versionMinor = 9
 def versionPatch = 0
 def myVersionCode = versionMajor * 10000 + versionMinor * 100 + versionPatch
 def myVersionName = "${versionMajor}.${versionMinor}.${versionPatch}"
