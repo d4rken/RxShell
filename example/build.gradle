@@ -6,12 +6,13 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    compileSdkVersion 27
+    compileSdkVersion project.ext.globalCompileSdkVersion
+    buildToolsVersion project.ext.globalBuildToolsVersion
 
     defaultConfig {
         applicationId "eu.darken.shellhelperexample"
-        minSdkVersion 16
-        targetSdkVersion 27
+        minSdkVersion project.ext.globalMinSdkVersion
+        targetSdkVersion project.ext.globalTargetSdkVersion
         versionCode 1
         versionName "1.0"
 
@@ -31,7 +32,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation 'com.android.support:appcompat-v7:27.0.2'
+    implementation "com.android.support:appcompat-v7:${supportLibVersion}"
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
 
     implementation 'com.jakewharton:butterknife:8.8.1'

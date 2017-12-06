@@ -7,8 +7,6 @@ notifications:
 android:
   components:
     - tools
-    - platform-tools
-    - tools
     - build-tools-27.0.1
     - android-27
     - extra-android-support
@@ -17,9 +15,6 @@ android:
       - 'android-sdk-preview-license-.+'
       - 'android-sdk-license-.+'
       - 'google-gdk-license-.+'
-
-before_install:
-  - chmod +x gradlew
 
 script: ./gradlew :core:clean :core:assemble :core:test
 
