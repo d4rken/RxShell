@@ -35,7 +35,6 @@ public class RxShell {
                         return new Session(session, writer);
                     })
                     .subscribeOn(Schedulers.io())
-                    .doOnSubscribe(d -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("open():doOnSubscribe: %s", d);})
                     .doOnSuccess(s -> {
                         if (RXSDebug.isDebug()) Timber.tag(TAG).v("open():doOnSuccess %s", s);
                         s.waitFor().subscribe(integer -> {
@@ -44,10 +43,7 @@ public class RxShell {
                             }
                         }, e -> Timber.tag(TAG).w(e, "Error resetting session."));
                     })
-                    .doOnSubscribe(d -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("open():doOnSubscribe %s", d);})
-                    .doOnSuccess(s -> { if (RXSDebug.isDebug()) Timber.tag(TAG).d("open():doOnSuccess %s", s);})
                     .doOnError(t -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v(t, "open():doOnError");})
-                    .doFinally(() -> {if (RXSDebug.isDebug()) Timber.tag(TAG).v("open():doFinally");})
                     .cache();
         }
         return session;

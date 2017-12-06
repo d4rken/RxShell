@@ -1,5 +1,7 @@
 package eu.darken.rxshell.cmd;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -45,7 +47,11 @@ public class CmdProcessor {
                     cmdQueue.add(item);
                 }
             }
-        }).doOnSuccess(item -> { if (RXSDebug.isDebug()) Timber.tag(TAG).i("Processed: %s", item); });
+        }).doOnSuccess(item -> {
+            if (RXSDebug.isDebug()) {
+                Timber.tag(TAG).log(item.tryGetErrors().size() > 0 ? Log.WARN : Log.INFO, "Processed: %s", item);
+            }
+        });
     }
 
     public synchronized void attach(RxShell.Session session) {
@@ -57,7 +63,7 @@ public class CmdProcessor {
                     while (true) {
                         QueueCmd item = cmdQueue.take();
                         if (item.isPoisonPill()) {
-                            if (RXSDebug.isDebug()) Timber.tag(TAG).d("Poison pill!");
+                            if (RXSDebug.isDebug()) Timber.tag(TAG).v("Poison pill!");
                             break;
                         } else {
                             idlePub.onNext(false);
@@ -79,17 +85,17 @@ public class CmdProcessor {
                 })
                 .subscribeOn(Schedulers.io())
                 .concatMap(item -> {
-                    if (RXSDebug.isDebug()) Timber.tag(TAG).i("Processing: %s", item.cmd);
-                    final Observable<Harvester.Batch> outputs = session.outputLines()
-                            .compose(upstream -> factory.create(upstream, item.cmd, Harvester.Type.OUTPUT))
-                            .onErrorReturnItem(new Harvester.Batch(Cmd.ExitCode.SHELL_DIED, null))
+                    if (RXSDebug.isDebug()) Timber.tag(TAG).d("Processing: %s", item.cmd);
+                    final Observable<OutputHarvester.Crop> outputs = session.outputLines()
+                            .compose(upstream -> factory.forOutput(upstream, item.cmd))
+                            .onErrorReturnItem(new OutputHarvester.Crop(null, Cmd.ExitCode.SHELL_DIED))
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("outputLine():doOnEach: %s", n); })
                             .toObservable().cache();
                     outputs.subscribe(s -> {}, e -> {});
 
-                    final Observable<Harvester.Batch> errors = session.errorLines()
-                            .compose(upstream -> factory.create(upstream, item.cmd, Harvester.Type.ERROR))
-                            .onErrorReturnItem(new Harvester.Batch(Cmd.ExitCode.SHELL_DIED, null))
+                    final Observable<Harvester.Crop> errors = session.errorLines()
+                            .compose(upstream -> factory.forError(upstream, item.cmd))
+                            .onErrorReturnItem(new Harvester.Crop(null))
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("errorLines():doOnEach: %s", n); })
                             .toObservable().cache();
                     errors.subscribe(s -> {}, e -> {});
@@ -102,7 +108,7 @@ public class CmdProcessor {
                         return Observable.just(item.exitCode(Cmd.ExitCode.SHELL_DIED));
                     }
 
-                    Observable<QueueCmd> harvestZipper = Observable.zip(outputs, errors, (out, err) -> item.exitCode(out.exitCode).output(out.buffer).errors(err.buffer));
+                    Observable<QueueCmd> harvestZipper = Observable.zip(outputs, errors, (out, err) -> item.outputHarvest(out).errorHarvest(err));
                     if (item.cmd.getTimeout() > 0) {
                         harvestZipper = harvestZipper.timeout(item.cmd.getTimeout(), TimeUnit.MILLISECONDS).onErrorReturn(error -> {
                             if (error instanceof TimeoutException) {
@@ -114,7 +120,6 @@ public class CmdProcessor {
                     return harvestZipper;
                 })
                 .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).d("Post zip: %s", n); })
-                .doAfterTerminate(() -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("Processor terminated."); })
                 .subscribe(new Observer<QueueCmd>() {
                     @Override
                     public void onSubscribe(Disposable d) {
@@ -169,15 +174,16 @@ public class CmdProcessor {
             return this;
         }
 
-        QueueCmd output(List<String> output) {
+        public QueueCmd outputHarvest(OutputHarvester.Crop out) {
             if (this.output != null) throw new IllegalStateException("Output already set!");
-            this.output = output;
+            exitCode(out.exitCode);
+            this.output = out.buffer;
             return this;
         }
 
-        QueueCmd errors(List<String> errors) {
+        public QueueCmd errorHarvest(Harvester.Crop err) {
             if (this.errors != null) throw new IllegalStateException("Errors already set!");
-            this.errors = errors;
+            this.errors = err.buffer;
             return this;
         }
 
@@ -199,7 +205,7 @@ public class CmdProcessor {
 
         @Override
         public String toString() {
-            return "QueueCmd(command=" + cmd + ", exitCode=" + exitCode + ", output=" + output + ", errors=" + errors + ")";
+            return "QueueCmd(command=" + cmd + ", exitCode=" + exitCode + ", output.size()=" + (output != null ? output.size() : null) + ", errors.size()=" + (errors != null ? errors.size() : null) + ")";
         }
     }
 

@@ -133,7 +133,7 @@ public class Cmd {
 
         @Override
         public String toString() {
-            return "Cmd.Result(exitcode=" + getExitCode() + ", output.size()=" + (output != null ? output.size() : null) + ", errors.size()=" + (errors != null ? errors.size() : null) + ")";
+            return "Cmd.Result(cmd=" + cmd + ", exitcode=" + getExitCode() + ", output.size()=" + (output != null ? output.size() : null) + ", errors.size()=" + (errors != null ? errors.size() : null) + ")";
         }
     }
 

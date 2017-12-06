@@ -15,66 +15,46 @@ import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.processors.FlowableProcessor;
 import timber.log.Timber;
 
-public class Harvester extends Flowable<Harvester.Batch> implements FlowableTransformer<String, Harvester.Batch> {
-    private static final String TAG = "RXS:Harvester";
+public abstract class Harvester<T extends Harvester.Crop> extends Flowable<T> implements FlowableTransformer<String, T> {
+    static final String TAG = "RXS:Harvester";
 
-    enum Type {
-        OUTPUT, ERROR
-    }
+    final Publisher<String> source;
+    final Cmd cmd;
 
-    private final Publisher<String> source;
-    private final Cmd cmd;
-    private final Type type;
-
-    public static class Batch {
-        public final Integer exitCode;
+    public static class Crop {
         public final List<String> buffer;
 
-        public Batch(Integer exitCode, List<String> buffer) {
-            this.exitCode = exitCode;
+        public Crop(List<String> buffer) {
             this.buffer = buffer;
         }
     }
 
-    public Harvester(Publisher<String> source, Cmd cmd, Type type) {
+    public Harvester(Publisher<String> source, Cmd cmd) {
         this.source = source;
         this.cmd = cmd;
-        this.type = type;
     }
 
-    @Override
-    protected void subscribeActual(Subscriber<? super Batch> actual) {
-        if (type == Type.OUTPUT) source.subscribe(new OutputHarvester(actual, cmd));
-        else if (type == Type.ERROR) source.subscribe(new ErrorHarvester(actual, cmd));
-        else throw new IllegalArgumentException("Type is " + type);
-    }
-
-    @Override
-    public Publisher<Batch> apply(Flowable<String> upstream) {
-        return new Harvester(upstream, cmd, type);
-    }
-
-    private static abstract class BaseHarvester implements Subscriber<String>, Subscription {
+    static abstract class BaseSub<T extends Crop> implements Subscriber<String>, Subscription {
         final String tag;
         final Cmd cmd;
-        final Subscriber<? super Batch> customer;
+        final Subscriber<? super T> customer;
         final List<String> buffer;
         final FlowableProcessor<String> processor;
         Integer exitCode;
         Subscription subscription;
 
-        BaseHarvester(String tag, Subscriber<? super Harvester.Batch> customer, Cmd cmd) {
+        BaseSub(String tag, Subscriber<? super T> customer, Cmd cmd) {
             this.tag = tag;
             this.customer = customer;
             this.cmd = cmd;
-            if (this instanceof OutputHarvester && cmd.isOutputBufferEnabled() || this instanceof ErrorHarvester && cmd.isErrorBufferEnabled()) {
+            if (this instanceof OutputHarvester.OutputSub && cmd.isOutputBufferEnabled() || this instanceof ErrorHarvester.ErrorSub && cmd.isErrorBufferEnabled()) {
                 buffer = new ArrayList<>();
             } else {
                 buffer = null;
             }
-            if (this instanceof OutputHarvester) {
+            if (this instanceof OutputHarvester.OutputSub) {
                 processor = cmd.getOutputProcessor();
-            } else if (this instanceof ErrorHarvester) {
+            } else if (this instanceof ErrorHarvester.ErrorSub) {
                 processor = cmd.getErrorProcessor();
             } else {
                 throw new RuntimeException();
@@ -89,19 +69,21 @@ public class Harvester extends Flowable<Harvester.Batch> implements FlowableTran
             }
         }
 
-        public abstract boolean parse(String line);
+        abstract boolean parse(String line);
 
         void publishParsed(String contentPart) {
             if (buffer != null) buffer.add(contentPart);
             if (processor != null) processor.onNext(contentPart);
         }
 
+        abstract T buildHarvest();
+
         @Override
         public void onNext(String line) {
             if (RXSDebug.isDebug()) Timber.tag(tag).v(line);
             if (parse(line)) {
                 subscription.cancel();
-                customer.onNext(new Batch(exitCode, buffer));
+                customer.onNext(buildHarvest());
                 customer.onComplete();
                 if (processor != null) processor.onComplete();
             }
@@ -133,73 +115,13 @@ public class Harvester extends Flowable<Harvester.Batch> implements FlowableTran
         }
     }
 
-    private static class ErrorHarvester extends BaseHarvester {
-        private static final String TAG = Harvester.TAG + ":Error";
-
-        ErrorHarvester(Subscriber<? super Batch> customer, Cmd cmd) {
-            super(TAG, customer, cmd);
-        }
-
-        @Override
-        public boolean parse(String line) {
-            String contentPart = line;
-
-            final int markerIndex = line.indexOf(cmd.getMarker());
-            if (markerIndex == 0) contentPart = null;
-            else if (markerIndex > 0) contentPart = line.substring(0, markerIndex - 1);
-
-            if (contentPart != null) {
-                publishParsed(contentPart);
-                if (RXSDebug.isDebug()) Timber.tag(TAG).w(contentPart);
-            }
-
-            return markerIndex >= 0;
-        }
-    }
-
-    private static class OutputHarvester extends BaseHarvester {
-        private static final String TAG = Harvester.TAG + ":Output";
-
-        OutputHarvester(Subscriber<? super Batch> customer, Cmd cmd) {
-            super(TAG, customer, cmd);
-        }
-
-        @Override
-        public boolean parse(String line) {
-            String contentPart = line;
-            String markerPart = null;
-
-            final int markerIndex = line.indexOf(cmd.getMarker());
-            if (markerIndex == 0) {
-                contentPart = null;
-                markerPart = line;
-            } else if (markerIndex > 0) {
-                contentPart = line.substring(0, markerIndex);
-                markerPart = line.substring(markerIndex);
-            }
-
-            if (contentPart != null) {
-                publishParsed(contentPart);
-                if (RXSDebug.isDebug()) Timber.tag(TAG).i(line);
-            }
-
-            if (markerPart != null) {
-                try {
-                    exitCode = Integer.valueOf(markerPart.substring(cmd.getMarker().length() + 1), 10);
-                } catch (Exception e) {
-                    Timber.tag(TAG).e(e);
-                    exitCode = Cmd.ExitCode.EXCEPTION;
-                }
-                return true;
-            } else {
-                return false;
-            }
-        }
-    }
-
     public static class Factory {
-        public Harvester create(Publisher<String> source, Cmd cmd, Type type) {
-            return new Harvester(source, cmd, type);
+        public OutputHarvester forOutput(Publisher<String> source, Cmd cmd) {
+            return new OutputHarvester(source, cmd);
+        }
+
+        public ErrorHarvester forError(Publisher<String> source, Cmd cmd) {
+            return new ErrorHarvester(source, cmd);
         }
     }
 }
