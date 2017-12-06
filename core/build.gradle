@@ -65,10 +65,6 @@ dependencies {
 }
 
 task jacocoTestReport(type: JacocoReport, dependsOn: "testDebugUnitTest") {
-    reports {
-        xml.enabled = true
-        html.enabled = true
-    }
     classDirectories = fileTree(
             dir: './build/intermediates/classes/debug',
             excludes: ['eu/darken/R*.class',
@@ -78,6 +74,13 @@ task jacocoTestReport(type: JacocoReport, dependsOn: "testDebugUnitTest") {
             'src/main/java',
     ])
     executionData = files('build/jacoco/testDebugUnitTest.exec')
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
 }
 
 coveralls {
