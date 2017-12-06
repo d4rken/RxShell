@@ -14,6 +14,13 @@ allprojects {
         google()
         jcenter()
     }
+    ext {
+        globalMinSdkVersion = 16
+        globalTargetSdkVersion = 27
+        globalCompileSdkVersion = 27
+        globalBuildToolsVersion = '27.0.1'
+        supportLibVersion = '27.0.2'
+    }
 }
 
 task clean(type: Delete) {
