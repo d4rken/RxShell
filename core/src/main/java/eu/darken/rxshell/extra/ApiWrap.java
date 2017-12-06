@@ -14,21 +14,21 @@ public class ApiWrap {
     }
 
     /**
-     * @return if >=19
+     * @return if &gt;=19
      */
     public static boolean hasKitKat() {
         return getCurrentSDKInt() >= Build.VERSION_CODES.KITKAT;
     }
 
     /**
-     * @return if >=18
+     * @return if &gt;=18
      */
     public static boolean hasJellyBeanMR2() {
         return getCurrentSDKInt() >= Build.VERSION_CODES.JELLY_BEAN_MR2;
     }
 
     /**
-     * @return if >=26
+     * @return if &gt;=26
      */
     public static boolean hasOreo() {
         return getCurrentSDKInt() >= Build.VERSION_CODES.O;

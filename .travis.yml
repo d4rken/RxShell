@@ -13,6 +13,6 @@ android:
       - 'android-sdk-license-.+'
       - 'google-gdk-license-.+'
 
-script: ./gradlew :core:clean :core:assembleDebug :core:testDebugUnitTest
+script: ./gradlew :core:clean :core:assemble :core:test
 
 after_success: ./gradlew :core:jacocoTestReport :core:coveralls
