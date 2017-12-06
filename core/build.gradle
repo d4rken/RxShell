@@ -102,6 +102,7 @@ ext {
     libraryDescription = 'Android shells with RxJava support.'
 
     siteUrl = 'https://github.com/d4rken/RxShell'
+    issuesUrl = 'https://github.com/d4rken/RxShell/issues'
     gitUrl = 'https://github.com/d4rken/RxShell.git'
 
     libraryVersion = myVersionName
