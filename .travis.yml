@@ -8,6 +8,7 @@ android:
   components:
     - tools
     - tools # https://github.com/codepath/android_guides/wiki/Setting-up-Travis-CI#setup
+    - platform-tools
     - build-tools-27.0.1
     - android-27
     - extra-android-support
