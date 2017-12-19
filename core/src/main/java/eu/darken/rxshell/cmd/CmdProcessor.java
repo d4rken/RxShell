@@ -95,7 +95,7 @@ public class CmdProcessor {
 
                     final Observable<Harvester.Crop> errors = session.errorLines()
                             .compose(upstream -> factory.forError(upstream, item.cmd))
-                            .onErrorReturnItem(new Harvester.Crop(null))
+                            .onErrorReturnItem(new ErrorHarvester.Crop(null))
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("errorLines():doOnEach: %s", n); })
                             .toObservable().cache();
                     errors.subscribe(s -> {}, e -> {});
@@ -108,16 +108,29 @@ public class CmdProcessor {
                         return Observable.just(item.exitCode(Cmd.ExitCode.SHELL_DIED));
                     }
 
-                    Observable<QueueCmd> harvestZipper = Observable.zip(outputs, errors, (out, err) -> item.outputHarvest(out).errorHarvest(err));
+                    Observable<QueueCmd> cropWait = Observable.merge(outputs, errors)
+                            .toList().toObservable()
+                            .map(crops -> {
+                                for (Harvester.Crop crop : crops) {
+                                    if (crop instanceof OutputHarvester.Crop) {
+                                        item.exitCode(((OutputHarvester.Crop) crop).exitCode);
+                                        item.output(crop.buffer);
+                                    } else {
+                                        item.errors(crop.buffer);
+                                    }
+                                }
+                                if (crops.size() != 2) item.exitCode(Cmd.ExitCode.SHELL_DIED);
+                                return item;
+                            });
                     if (item.cmd.getTimeout() > 0) {
-                        harvestZipper = harvestZipper.timeout(item.cmd.getTimeout(), TimeUnit.MILLISECONDS).onErrorReturn(error -> {
+                        cropWait = cropWait.timeout(item.cmd.getTimeout(), TimeUnit.MILLISECONDS).onErrorReturn(error -> {
                             if (error instanceof TimeoutException) {
                                 if (RXSDebug.isDebug()) Timber.tag(TAG).w("Command timed out: %s", item);
                                 return item.exitCode(Cmd.ExitCode.TIMEOUT);
                             } else throw new RuntimeException(error);
                         });
                     }
-                    return harvestZipper;
+                    return cropWait;
                 })
                 .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).d("Post zip: %s", n); })
                 .subscribe(new Observer<QueueCmd>() {
@@ -174,16 +187,15 @@ public class CmdProcessor {
             return this;
         }
 
-        public QueueCmd outputHarvest(OutputHarvester.Crop out) {
+        public QueueCmd output(List<String> output) {
             if (this.output != null) throw new IllegalStateException("Output already set!");
-            exitCode(out.exitCode);
-            this.output = out.buffer;
+            this.output = output;
             return this;
         }
 
-        public QueueCmd errorHarvest(Harvester.Crop err) {
+        public QueueCmd errors(List<String> errors) {
             if (this.errors != null) throw new IllegalStateException("Errors already set!");
-            this.errors = err.buffer;
+            this.errors = errors;
             return this;
         }
 
