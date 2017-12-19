@@ -16,6 +16,10 @@ android:
       - 'android-sdk-license-.+'
       - 'google-gdk-license-.+'
 
+before_install:
+  - chmod +x gradlew
+  - yes | sdkmanager "platforms;android-27"
+
 script: ./gradlew :core:clean :core:assemble :core:test
 
 after_success: ./gradlew :core:jacocoTestReport :core:coveralls
