@@ -1,11 +1,12 @@
 package eu.darken.rxshell.cmd;
 
+import android.support.annotation.Nullable;
+
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import eu.darken.rxshell.extra.RXSDebug;
@@ -35,30 +36,17 @@ public abstract class Harvester<T extends Harvester.Crop> extends Flowable<T> im
     }
 
     static abstract class BaseSub<T extends Crop> implements Subscriber<String>, Subscription {
-        final String tag;
-        final Cmd cmd;
-        final Subscriber<? super T> customer;
-        final List<String> buffer;
-        final FlowableProcessor<String> processor;
-        Integer exitCode;
+        private final String tag;
+        private final Subscriber<? super T> customer;
+        private final FlowableProcessor<String> processor;
+        private final List<String> buffer;
         Subscription subscription;
 
-        BaseSub(String tag, Subscriber<? super T> customer, Cmd cmd) {
+        BaseSub(String tag, Subscriber<? super T> customer, @Nullable List<String> buffer, @Nullable FlowableProcessor<String> processor) {
             this.tag = tag;
             this.customer = customer;
-            this.cmd = cmd;
-            if (this instanceof OutputHarvester.OutputSub && cmd.isOutputBufferEnabled() || this instanceof ErrorHarvester.ErrorSub && cmd.isErrorBufferEnabled()) {
-                buffer = new ArrayList<>();
-            } else {
-                buffer = null;
-            }
-            if (this instanceof OutputHarvester.OutputSub) {
-                processor = cmd.getOutputProcessor();
-            } else if (this instanceof ErrorHarvester.ErrorSub) {
-                processor = cmd.getErrorProcessor();
-            } else {
-                throw new RuntimeException();
-            }
+            this.processor = processor;
+            this.buffer = buffer;
         }
 
         @Override
@@ -76,14 +64,14 @@ public abstract class Harvester<T extends Harvester.Crop> extends Flowable<T> im
             if (processor != null) processor.onNext(contentPart);
         }
 
-        abstract T buildHarvest();
+        abstract T buildCropHarvest(@Nullable List<String> buffer);
 
         @Override
         public void onNext(String line) {
             if (RXSDebug.isDebug()) Timber.tag(tag).v(line);
             if (parse(line)) {
                 subscription.cancel();
-                customer.onNext(buildHarvest());
+                customer.onNext(buildCropHarvest(buffer));
                 customer.onComplete();
                 if (processor != null) processor.onComplete();
             }
