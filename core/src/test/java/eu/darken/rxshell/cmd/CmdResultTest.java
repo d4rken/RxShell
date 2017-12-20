@@ -49,24 +49,6 @@ public class CmdResultTest extends BaseTest {
     }
 
     @Test
-    public void testTryGet() {
-        Cmd.Result emptyResult = new Cmd.Result(cmd);
-        assertThat(emptyResult.getOutput(), is(nullValue()));
-        assertThat(emptyResult.getErrors(), is(nullValue()));
-        assertThat(emptyResult.tryGetOutput(), is(not(nullValue())));
-        assertThat(emptyResult.tryGetErrors(), is(not(nullValue())));
-        assertThat(emptyResult.getCmd(), is(cmd));
-
-        List<String> output = new ArrayList<>();
-        List<String> errors = new ArrayList<>();
-        Cmd.Result result = new Cmd.Result(cmd, Cmd.ExitCode.SHELL_DIED, output, errors);
-        assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
-        assertThat(result.getCmd(), is(cmd));
-        assertThat(result.tryGetOutput(), is(output));
-        assertThat(result.tryGetErrors(), is(errors));
-    }
-
-    @Test
     public void testMerge() {
         Cmd.Result emptyResult = new Cmd.Result(cmd);
         assertThat(emptyResult.merge(), is(not(nullValue())));

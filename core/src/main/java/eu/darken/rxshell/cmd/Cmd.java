@@ -100,28 +100,36 @@ public class Cmd {
             return cmd;
         }
 
+        /**
+         * The last exitcode emitted by the executed commands.
+         * <p>Think:
+         * {@code
+         * YOUR_COMMAND;YOUR_COMMAND;echo $?
+         * }
+         * <p>For convenience {@link ExitCode}
+         */
         public int getExitCode() {
             return exitCode;
         }
 
+        /**
+         * Your command's output.
+         * <p>The shell processes' {@code STDOUT} during the execution your commands.
+         * <p>Maybe null depending on {@link Builder#outputBuffer(boolean)}
+         */
         @Nullable
         public List<String> getOutput() {
             return output;
         }
 
+        /**
+         * Your command's errors.
+         * <p>The shell processes' {@code STDERR} during the execution your commands.
+         * <p>Maybe null depending on {@link Builder#errorBuffer(boolean)} (boolean)}
+         */
         @Nullable
         public List<String> getErrors() {
             return errors;
-        }
-
-        public List<String> tryGetOutput() {
-            if (getOutput() == null) return new ArrayList<>();
-            return getOutput();
-        }
-
-        public List<String> tryGetErrors() {
-            if (getErrors() == null) return new ArrayList<>();
-            return getErrors();
         }
 
         public Collection<String> merge() {

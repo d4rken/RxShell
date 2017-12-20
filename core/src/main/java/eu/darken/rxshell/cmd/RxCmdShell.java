@@ -46,6 +46,12 @@ public class RxCmdShell {
         processorFactory = builder.getProcessorFactory();
     }
 
+    /**
+     * Calling this repeatedly will keep returning the same {@link Session} while it is alive.
+     * <p> Session creation may be blocking for longer durations, e.g. if the user is shown a root access prompt.
+     *
+     * @return a {@link Single} that when subscribed to creates a new session.
+     */
     public synchronized Single<Session> open() {
         if (RXSDebug.isDebug()) Timber.tag(TAG).v("open()");
         if (session == null) {
@@ -98,21 +104,34 @@ public class RxCmdShell {
         return session;
     }
 
+    /**
+     * @see Session#isAlive()
+     */
     public Single<Boolean> isAlive() {
         if (RXSDebug.isDebug()) Timber.tag(TAG).v("isAlive()");
         if (session == null) return Single.just(false);
         else return session.flatMap(Session::isAlive);
     }
 
+    /**
+     * If there is no active session this just completes
+     *
+     * @see Session#cancel()
+     */
     public synchronized Completable cancel() {
         if (RXSDebug.isDebug()) Timber.tag(TAG).v("cancel()");
         if (session == null) return Completable.complete();
         else return session.flatMapCompletable(Session::cancel);
     }
 
+    /**
+     * If there is no active session this returns immediately with exitcode {@link Cmd.ExitCode#OK}
+     *
+     * @see Session#close()
+     */
     public synchronized Single<Integer> close() {
         if (RXSDebug.isDebug()) Timber.tag(TAG).v("close()");
-        if (session == null) return Single.just(0);
+        if (session == null) return Single.just(Cmd.ExitCode.OK);
         else return session.flatMap(Session::close);
     }
 
@@ -186,11 +205,24 @@ public class RxCmdShell {
             return rxShell;
         }
 
+        /**
+         * Environment variables that will be set when opening the shell session.
+         * <p>
+         * Think `PATH=$PATH:/something`
+         * </p>
+         * Calling this the same key will overwrite the previous value.
+         *
+         * @param variable variable name
+         * @param value    variable value
+         */
         public Builder shellEnvironment(String variable, String value) {
             this.environment.put(variable, value);
             return this;
         }
 
+        /**
+         * @see #shellEnvironment(String, String)
+         */
         public Builder shellEnvironment(Collection<Pair<String, String>> vars) {
             for (Pair<String, String> pair : vars) {
                 shellEnvironment(pair.first, pair.second);
@@ -198,6 +230,10 @@ public class RxCmdShell {
             return this;
         }
 
+        /**
+         * @param envVars the class which provides environment variables, will be called when calling {@link #build()}
+         * @see #shellEnvironment(String, String)
+         */
         public Builder shellEnvironment(HasEnvironmentVariables envVars) {
             this.envVarSources.add(envVars);
             return this;
@@ -207,11 +243,21 @@ public class RxCmdShell {
             return environment;
         }
 
-        public Builder root(boolean root) {
-            this.useRoot = root;
+        /**
+         * A root shell is opened by executing `su` otherwise `sh` is executed.
+         *
+         * @param useRoot whether to create a root shell. Defaults to `false`.
+         */
+        public Builder root(boolean useRoot) {
+            this.useRoot = useRoot;
             return this;
         }
 
+        /**
+         * Each call creates a new instance.
+         *
+         * @return a new {@link RxCmdShell} instance.
+         */
         public RxCmdShell build() {
             for (HasEnvironmentVariables envVars : envVarSources) {
                 shellEnvironment(envVars.getEnvironmentVariables(useRoot));
@@ -225,6 +271,11 @@ public class RxCmdShell {
             return new RxCmdShell(this);
         }
 
+        /**
+         * Equal to {@code builder.build().open()}
+         *
+         * @see RxCmdShell#open()
+         */
         public Single<Session> open() {
             return build().open();
         }
