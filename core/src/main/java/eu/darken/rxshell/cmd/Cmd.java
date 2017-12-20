@@ -78,15 +78,15 @@ public class Cmd {
     public static class Result {
         private final Cmd cmd;
         private final int exitCode;
-        @Nullable private final List<String> output;
-        @Nullable private final List<String> errors;
+        private final List<String> output;
+        private final List<String> errors;
 
         public Result(Cmd cmd) {
             this(cmd, Cmd.ExitCode.INITIAL);
         }
 
         public Result(Cmd cmd, int exitCode) {
-            this(cmd, exitCode, null, null);
+            this(cmd, exitCode, new ArrayList<>(), new ArrayList<>());
         }
 
         public Result(Cmd cmd, int exitCode, @Nullable List<String> output, @Nullable List<String> errors) {
@@ -118,9 +118,8 @@ public class Cmd {
         /**
          * Your command's output.
          * <p>The shell processes' {@code STDOUT} during the execution your commands.
-         * <p>Maybe null depending on {@link Builder#outputBuffer(boolean)}
+         * <p>Maybe {@code null} depending on {@link Builder#outputBuffer(boolean)}
          */
-        @Nullable
         public List<String> getOutput() {
             return output;
         }
@@ -128,9 +127,8 @@ public class Cmd {
         /**
          * Your command's errors.
          * <p>The shell processes' {@code STDERR} during the execution your commands.
-         * <p>Maybe null depending on {@link Builder#errorBuffer(boolean)} (boolean)}
+         * <p>Maybe {@code null} depending on {@link Builder#errorBuffer(boolean)} (boolean)}
          */
-        @Nullable
         public List<String> getErrors() {
             return errors;
         }
