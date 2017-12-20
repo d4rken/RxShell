@@ -56,7 +56,7 @@ public class ErrorHarvester extends Harvester<Harvester.Crop> {
 
         @Override
         Crop buildCropHarvest(@Nullable List<String> buffer) {
-            return new Crop(buffer);
+            return new Crop(buffer, true);
         }
     }
 }

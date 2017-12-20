@@ -23,10 +23,12 @@ public abstract class Harvester<T extends Harvester.Crop> extends Flowable<T> im
     final Cmd cmd;
 
     public static class Crop {
-        public final List<String> buffer;
+        @Nullable final List<String> buffer;
+        final boolean isComplete;
 
-        public Crop(List<String> buffer) {
+        public Crop(@Nullable List<String> buffer, boolean isComplete) {
             this.buffer = buffer;
+            this.isComplete = isComplete;
         }
     }
 

@@ -14,10 +14,10 @@ import timber.log.Timber;
 
 public class OutputHarvester extends Harvester<OutputHarvester.Crop> {
     public static class Crop extends Harvester.Crop {
-        public final Integer exitCode;
+        final Integer exitCode;
 
-        public Crop(List<String> buffer, Integer exitCode) {
-            super(buffer);
+        public Crop(@Nullable List<String> buffer, @Nullable Integer exitCode, boolean isComplete) {
+            super(buffer, isComplete);
             this.exitCode = exitCode;
         }
     }
@@ -81,7 +81,7 @@ public class OutputHarvester extends Harvester<OutputHarvester.Crop> {
 
         @Override
         Crop buildCropHarvest(@Nullable List<String> buffer) {
-            return new Crop(buffer, exitCode);
+            return new Crop(buffer, exitCode, true);
         }
     }
 }
