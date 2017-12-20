@@ -86,7 +86,7 @@ public class Cmd {
         }
 
         public Result(Cmd cmd, int exitCode) {
-            this(cmd, exitCode, null, null);
+            this(cmd, exitCode, new ArrayList<>(), new ArrayList<>());
         }
 
         public Result(Cmd cmd, int exitCode, @Nullable List<String> output, @Nullable List<String> errors) {
