@@ -24,8 +24,8 @@ public class CmdResultTest extends BaseTest {
         Cmd.Result result = new Cmd.Result(cmd);
         assertThat(result.getExitCode(), is(Cmd.ExitCode.INITIAL));
         assertThat(result.getCmd(), is(cmd));
-        assertThat(result.getOutput(), is(nullValue()));
-        assertThat(result.getErrors(), is(nullValue()));
+        assertThat(result.getOutput(), is(not(nullValue())));
+        assertThat(result.getErrors(), is(not(nullValue())));
     }
 
     @Test
@@ -33,8 +33,8 @@ public class CmdResultTest extends BaseTest {
         Cmd.Result result = new Cmd.Result(cmd, Cmd.ExitCode.SHELL_DIED);
         assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
         assertThat(result.getCmd(), is(cmd));
-        assertThat(result.getOutput(), is(nullValue()));
-        assertThat(result.getErrors(), is(nullValue()));
+        assertThat(result.getOutput(), is(not(nullValue())));
+        assertThat(result.getErrors(), is(not(nullValue())));
     }
 
     @Test
