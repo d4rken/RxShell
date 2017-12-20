@@ -3,6 +3,7 @@ package eu.darken.rxshell.cmd;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +50,7 @@ public class CmdProcessor {
             }
         }).doOnSuccess(item -> {
             if (RXSDebug.isDebug()) {
-                Timber.tag(TAG).log(item.tryGetErrors().size() > 0 ? Log.WARN : Log.INFO, "Processed: %s", item);
+                Timber.tag(TAG).log(item.getErrors() != null && item.getErrors().size() > 0 ? Log.WARN : Log.INFO, "Processed: %s", item);
             }
         });
     }
@@ -199,7 +200,11 @@ public class CmdProcessor {
         }
 
         Cmd.Result buildResult() {
-            return new Cmd.Result(cmd, exitCode, output, errors);
+            return new Cmd.Result(
+                    cmd, exitCode,
+                    output == null && cmd.isOutputBufferEnabled() ? new ArrayList<>() : output,
+                    errors == null && cmd.isErrorBufferEnabled() ? new ArrayList<>() : errors
+            );
         }
 
         void emit() {

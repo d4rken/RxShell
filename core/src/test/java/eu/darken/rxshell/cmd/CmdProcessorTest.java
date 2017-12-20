@@ -31,12 +31,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CmdProcessorTest extends BaseTest {
@@ -215,8 +218,8 @@ public class CmdProcessorTest extends BaseTest {
             t.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
             assertThat(t.values().get(0).getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
 
-            assertThat(t.values().get(0).getOutput(), is(nullValue()));
-            assertThat(t.values().get(0).getErrors(), is(nullValue()));
+            assertThat(t.values().get(0).getOutput(), is(not(nullValue())));
+            assertThat(t.values().get(0).getErrors(), is(not(nullValue())));
         }
     }
 
@@ -262,6 +265,8 @@ public class CmdProcessorTest extends BaseTest {
                 .test().awaitDone(2, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
 
         assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
+        assertThat(result.getOutput(), is(not(nullValue())));
+        assertThat(result.getErrors(), is(not(nullValue())));
     }
 
     @Test
@@ -373,6 +378,27 @@ public class CmdProcessorTest extends BaseTest {
 
             assertThat(getUncaughtExceptions().isEmpty(), is(true));
         }
+    }
+
+    @Test
+    public void testCmdQueue_buffers() {
+        Cmd cmd = mock(Cmd.class);
+        CmdProcessor.QueueCmd queueCmd = new CmdProcessor.QueueCmd(cmd, null);
+
+        assertThat(queueCmd.buildResult().getOutput(), is(nullValue()));
+        assertThat(queueCmd.buildResult().getErrors(), is(nullValue()));
+
+        when(cmd.isOutputBufferEnabled()).thenReturn(true);
+        assertThat(queueCmd.buildResult().getOutput(), is(not(nullValue())));
+        assertThat(queueCmd.buildResult().getErrors(), is(nullValue()));
+
+        when(cmd.isErrorBufferEnabled()).thenReturn(true);
+        assertThat(queueCmd.buildResult().getOutput(), is(not(nullValue())));
+        assertThat(queueCmd.buildResult().getErrors(), is(not(nullValue())));
+
+        when(cmd.isOutputBufferEnabled()).thenReturn(false);
+        assertThat(queueCmd.buildResult().getOutput(), is(nullValue()));
+        assertThat(queueCmd.buildResult().getErrors(), is(not(nullValue())));
     }
 
 }
