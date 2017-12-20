@@ -88,14 +88,14 @@ public class CmdProcessor {
                     if (RXSDebug.isDebug()) Timber.tag(TAG).d("Processing: %s", item.cmd);
                     final Observable<OutputHarvester.Crop> outputs = session.outputLines()
                             .compose(upstream -> factory.forOutput(upstream, item.cmd))
-                            .onErrorReturnItem(new OutputHarvester.Crop(null, Cmd.ExitCode.SHELL_DIED))
+                            .onErrorReturnItem(new OutputHarvester.Crop(null, Cmd.ExitCode.SHELL_DIED, false))
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("outputLine():doOnEach: %s", n); })
                             .toObservable().cache();
                     outputs.subscribe(s -> {}, e -> {});
 
                     final Observable<Harvester.Crop> errors = session.errorLines()
                             .compose(upstream -> factory.forError(upstream, item.cmd))
-                            .onErrorReturnItem(new ErrorHarvester.Crop(null))
+                            .onErrorReturnItem(new ErrorHarvester.Crop(null, false))
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("errorLines():doOnEach: %s", n); })
                             .toObservable().cache();
                     errors.subscribe(s -> {}, e -> {});
@@ -111,6 +111,7 @@ public class CmdProcessor {
                     Observable<QueueCmd> cropWait = Observable.merge(outputs, errors)
                             .toList().toObservable()
                             .map(crops -> {
+                                boolean isComplete = true;
                                 for (Harvester.Crop crop : crops) {
                                     if (crop instanceof OutputHarvester.Crop) {
                                         item.exitCode(((OutputHarvester.Crop) crop).exitCode);
@@ -118,8 +119,9 @@ public class CmdProcessor {
                                     } else {
                                         item.errors(crop.buffer);
                                     }
+                                    if (!crop.isComplete) isComplete = false;
                                 }
-                                if (crops.size() != 2) item.exitCode(Cmd.ExitCode.SHELL_DIED);
+                                if (crops.size() != 2 || !isComplete) item.exitCode(Cmd.ExitCode.SHELL_DIED);
                                 return item;
                             });
                     if (item.cmd.getTimeout() > 0) {
@@ -182,19 +184,16 @@ public class CmdProcessor {
         }
 
         QueueCmd exitCode(int exitCode) {
-            if (this.exitCode != Cmd.ExitCode.INITIAL) throw new IllegalStateException("ExitCode already set!");
             this.exitCode = exitCode;
             return this;
         }
 
-        public QueueCmd output(List<String> output) {
-            if (this.output != null) throw new IllegalStateException("Output already set!");
+        QueueCmd output(List<String> output) {
             this.output = output;
             return this;
         }
 
-        public QueueCmd errors(List<String> errors) {
-            if (this.errors != null) throw new IllegalStateException("Errors already set!");
+        QueueCmd errors(List<String> errors) {
             this.errors = errors;
             return this;
         }

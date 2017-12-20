@@ -1,8 +1,11 @@
 package eu.darken.rxshell.cmd;
 
+import android.support.annotation.Nullable;
+
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import eu.darken.rxshell.extra.RXSDebug;
@@ -11,10 +14,10 @@ import timber.log.Timber;
 
 public class OutputHarvester extends Harvester<OutputHarvester.Crop> {
     public static class Crop extends Harvester.Crop {
-        public final Integer exitCode;
+        final Integer exitCode;
 
-        public Crop(List<String> buffer, Integer exitCode) {
-            super(buffer);
+        public Crop(@Nullable List<String> buffer, @Nullable Integer exitCode, boolean isComplete) {
+            super(buffer, isComplete);
             this.exitCode = exitCode;
         }
     }
@@ -36,9 +39,12 @@ public class OutputHarvester extends Harvester<OutputHarvester.Crop> {
 
     static class OutputSub extends BaseSub<Crop> {
         private static final String TAG = Harvester.TAG + ":Output";
+        private final Cmd cmd;
+        Integer exitCode;
 
         OutputSub(Subscriber<? super Crop> customer, Cmd cmd) {
-            super(TAG, customer, cmd);
+            super(TAG, customer, cmd.isOutputBufferEnabled() ? new ArrayList<>() : null, cmd.getOutputProcessor());
+            this.cmd = cmd;
         }
 
         @Override
@@ -56,8 +62,8 @@ public class OutputHarvester extends Harvester<OutputHarvester.Crop> {
             }
 
             if (contentPart != null) {
-                publishParsed(contentPart);
                 if (RXSDebug.isDebug()) Timber.tag(TAG).d(line);
+                publishParsed(contentPart);
             }
 
             if (markerPart != null) {
@@ -74,8 +80,8 @@ public class OutputHarvester extends Harvester<OutputHarvester.Crop> {
         }
 
         @Override
-        Crop buildHarvest() {
-            return new Crop(buffer, exitCode);
+        Crop buildCropHarvest(@Nullable List<String> buffer) {
+            return new Crop(buffer, exitCode, true);
         }
     }
 }

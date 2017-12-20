@@ -249,7 +249,7 @@ public class CmdProcessorTest extends BaseTest {
     }
 
     @Test
-    public void testHarvestersUpstreamError() throws IOException {
+    public void testHarvestersUpstreamError_both() throws IOException {
         processor.attach(session);
 
         new Thread(() -> {
@@ -260,6 +260,36 @@ public class CmdProcessorTest extends BaseTest {
 
         final Cmd.Result result = processor.submit(Cmd.builder("sleep 5000").build())
                 .test().awaitDone(2, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
+
+        assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
+    }
+
+    @Test
+    public void testHarvestersUpstreamError_outpout() throws IOException {
+        processor.attach(session);
+
+        new Thread(() -> {
+            TestHelper.sleep(100);
+            mockSession.getOutputPub().onError(new IOException());
+        }).start();
+
+        final Cmd.Result result = processor.submit(Cmd.builder("sleep 1000").build())
+                .test().awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
+
+        assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
+    }
+
+    @Test
+    public void testHarvestersUpstreamError_error() throws IOException {
+        processor.attach(session);
+
+        new Thread(() -> {
+            TestHelper.sleep(100);
+            mockSession.getErrorPub().onError(new IOException());
+        }).start();
+
+        final Cmd.Result result = processor.submit(Cmd.builder("sleep 1000").build())
+                .test().awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
 
         assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
     }
