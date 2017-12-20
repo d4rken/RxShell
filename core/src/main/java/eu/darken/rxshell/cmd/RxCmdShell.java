@@ -160,25 +160,46 @@ public class RxCmdShell {
                     .cache();
         }
 
+        /**
+         * @param cmd the command to execute
+         * @return a {@link Single} that when subscribed to will submit the command and return it's results.
+         */
         public Single<Cmd.Result> submit(Cmd cmd) {
             return cmdProcessor.submit(cmd);
         }
 
+        /**
+         * @return {@code true} if the current {@link Session} is alive and usable for command submission.
+         */
         public Single<Boolean> isAlive() {
             if (RXSDebug.isDebug()) Timber.tag(TAG).v("isAlive()");
             return session.isAlive();
         }
 
+        /**
+         * Blocks until the {@link RxCmdShell.Session} terminates.
+         *
+         * @return A blocking single emitting the shell exitCode.
+         */
         public Single<Integer> waitFor() {
             if (RXSDebug.isDebug()) Timber.tag(TAG).v("waitFor()");
             return waitFor;
         }
 
+        /**
+         * Cancels the current session, terminating the current command and all queued commands.
+         * <p>Canceled commands will return {@link Cmd.ExitCode#SHELL_DIED} as exitcode.
+         */
         public Completable cancel() {
             if (RXSDebug.isDebug()) Timber.tag(TAG).v("cancel()");
             return cancel;
         }
 
+        /**
+         * Closes the current session after all commands have executed.
+         *
+         * @return a {@link Single} that blocks until the session completes and emits the shell processes exitcode.
+         */
         public Single<Integer> close() {
             if (RXSDebug.isDebug()) Timber.tag(TAG).v("close()");
             return close;
