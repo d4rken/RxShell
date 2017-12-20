@@ -1,7 +1,12 @@
 package eu.darken.rxshell.cmd;
 
+import android.support.annotation.Nullable;
+
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import eu.darken.rxshell.extra.RXSDebug;
 import io.reactivex.Flowable;
@@ -26,9 +31,11 @@ public class ErrorHarvester extends Harvester<Harvester.Crop> {
 
     static class ErrorSub extends BaseSub<Crop> {
         private static final String TAG = Harvester.TAG + ":Error";
+        private final Cmd cmd;
 
-        ErrorSub(Subscriber<? super Crop> customer, Cmd cmd) {
-            super(TAG, customer, cmd);
+        ErrorSub(Subscriber<? super ErrorHarvester.Crop> customer, Cmd cmd) {
+            super(TAG, customer, cmd.isErrorBufferEnabled() ? new ArrayList<>() : null, cmd.getErrorProcessor());
+            this.cmd = cmd;
         }
 
         @Override
@@ -40,16 +47,16 @@ public class ErrorHarvester extends Harvester<Harvester.Crop> {
             else if (markerIndex > 0) contentPart = line.substring(0, markerIndex - 1);
 
             if (contentPart != null) {
-                publishParsed(contentPart);
                 if (RXSDebug.isDebug()) Timber.tag(TAG).d(contentPart);
+                publishParsed(contentPart);
             }
 
             return markerIndex >= 0;
         }
 
         @Override
-        Crop buildHarvest() {
-            return new Crop(buffer);
+        Crop buildCropHarvest(@Nullable List<String> buffer) {
+            return new Crop(buffer, true);
         }
     }
 }

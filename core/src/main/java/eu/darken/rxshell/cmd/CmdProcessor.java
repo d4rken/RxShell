@@ -3,6 +3,7 @@ package eu.darken.rxshell.cmd;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +50,7 @@ public class CmdProcessor {
             }
         }).doOnSuccess(item -> {
             if (RXSDebug.isDebug()) {
-                Timber.tag(TAG).log(item.tryGetErrors().size() > 0 ? Log.WARN : Log.INFO, "Processed: %s", item);
+                Timber.tag(TAG).log(item.getErrors() != null && item.getErrors().size() > 0 ? Log.WARN : Log.INFO, "Processed: %s", item);
             }
         });
     }
@@ -88,14 +89,14 @@ public class CmdProcessor {
                     if (RXSDebug.isDebug()) Timber.tag(TAG).d("Processing: %s", item.cmd);
                     final Observable<OutputHarvester.Crop> outputs = session.outputLines()
                             .compose(upstream -> factory.forOutput(upstream, item.cmd))
-                            .onErrorReturnItem(new OutputHarvester.Crop(null, Cmd.ExitCode.SHELL_DIED))
+                            .onErrorReturnItem(new OutputHarvester.Crop(null, Cmd.ExitCode.SHELL_DIED, false))
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("outputLine():doOnEach: %s", n); })
                             .toObservable().cache();
                     outputs.subscribe(s -> {}, e -> {});
 
                     final Observable<Harvester.Crop> errors = session.errorLines()
                             .compose(upstream -> factory.forError(upstream, item.cmd))
-                            .onErrorReturnItem(new Harvester.Crop(null))
+                            .onErrorReturnItem(new ErrorHarvester.Crop(null, false))
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("errorLines():doOnEach: %s", n); })
                             .toObservable().cache();
                     errors.subscribe(s -> {}, e -> {});
@@ -108,16 +109,31 @@ public class CmdProcessor {
                         return Observable.just(item.exitCode(Cmd.ExitCode.SHELL_DIED));
                     }
 
-                    Observable<QueueCmd> harvestZipper = Observable.zip(outputs, errors, (out, err) -> item.outputHarvest(out).errorHarvest(err));
+                    Observable<QueueCmd> cropWait = Observable.merge(outputs, errors)
+                            .toList().toObservable()
+                            .map(crops -> {
+                                boolean isComplete = true;
+                                for (Harvester.Crop crop : crops) {
+                                    if (crop instanceof OutputHarvester.Crop) {
+                                        item.exitCode(((OutputHarvester.Crop) crop).exitCode);
+                                        item.output(crop.buffer);
+                                    } else {
+                                        item.errors(crop.buffer);
+                                    }
+                                    if (!crop.isComplete) isComplete = false;
+                                }
+                                if (crops.size() != 2 || !isComplete) item.exitCode(Cmd.ExitCode.SHELL_DIED);
+                                return item;
+                            });
                     if (item.cmd.getTimeout() > 0) {
-                        harvestZipper = harvestZipper.timeout(item.cmd.getTimeout(), TimeUnit.MILLISECONDS).onErrorReturn(error -> {
+                        cropWait = cropWait.timeout(item.cmd.getTimeout(), TimeUnit.MILLISECONDS).onErrorReturn(error -> {
                             if (error instanceof TimeoutException) {
                                 if (RXSDebug.isDebug()) Timber.tag(TAG).w("Command timed out: %s", item);
                                 return item.exitCode(Cmd.ExitCode.TIMEOUT);
                             } else throw new RuntimeException(error);
                         });
                     }
-                    return harvestZipper;
+                    return cropWait;
                 })
                 .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).d("Post zip: %s", n); })
                 .subscribe(new Observer<QueueCmd>() {
@@ -169,26 +185,26 @@ public class CmdProcessor {
         }
 
         QueueCmd exitCode(int exitCode) {
-            if (this.exitCode != Cmd.ExitCode.INITIAL) throw new IllegalStateException("ExitCode already set!");
             this.exitCode = exitCode;
             return this;
         }
 
-        public QueueCmd outputHarvest(OutputHarvester.Crop out) {
-            if (this.output != null) throw new IllegalStateException("Output already set!");
-            exitCode(out.exitCode);
-            this.output = out.buffer;
+        QueueCmd output(List<String> output) {
+            this.output = output;
             return this;
         }
 
-        public QueueCmd errorHarvest(Harvester.Crop err) {
-            if (this.errors != null) throw new IllegalStateException("Errors already set!");
-            this.errors = err.buffer;
+        QueueCmd errors(List<String> errors) {
+            this.errors = errors;
             return this;
         }
 
         Cmd.Result buildResult() {
-            return new Cmd.Result(cmd, exitCode, output, errors);
+            return new Cmd.Result(
+                    cmd, exitCode,
+                    output == null && cmd.isOutputBufferEnabled() ? new ArrayList<>() : output,
+                    errors == null && cmd.isErrorBufferEnabled() ? new ArrayList<>() : errors
+            );
         }
 
         void emit() {
