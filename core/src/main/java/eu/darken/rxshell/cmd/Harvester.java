@@ -42,6 +42,7 @@ public abstract class Harvester<T extends Harvester.Crop> extends Flowable<T> im
         private final Subscriber<? super T> customer;
         private final FlowableProcessor<String> processor;
         private final List<String> buffer;
+        private volatile boolean isDone = false;
         Subscription subscription;
 
         BaseSub(String tag, Subscriber<? super T> customer, @Nullable List<String> buffer, @Nullable FlowableProcessor<String> processor) {
@@ -66,30 +67,41 @@ public abstract class Harvester<T extends Harvester.Crop> extends Flowable<T> im
             if (processor != null) processor.onNext(contentPart);
         }
 
-        abstract T buildCropHarvest(@Nullable List<String> buffer);
+        abstract T buildCropHarvest(@Nullable List<String> buffer, boolean complete);
+
+        void endHarvest(boolean isComplete) {
+            if (RXSDebug.isDebug()) Timber.tag(tag).d("endHarvest(isComplete=%b, isDone=%b)", isComplete, isDone);
+
+            if (isDone) return;
+            isDone = true;
+
+            subscription.cancel();
+
+            customer.onNext(buildCropHarvest(buffer, isComplete));
+            customer.onComplete();
+
+            if (processor != null) {
+                if (isComplete) processor.onComplete();
+                else processor.onError(new IOException("Upstream completed prematurely."));
+            }
+        }
 
         @Override
         public void onNext(String line) {
             if (RXSDebug.isDebug()) Timber.tag(tag).v(line);
-            if (parse(line)) {
-                subscription.cancel();
-                customer.onNext(buildCropHarvest(buffer));
-                customer.onComplete();
-                if (processor != null) processor.onComplete();
-            }
+            if (parse(line)) endHarvest(true);
         }
 
         @Override
         public void onError(Throwable e) {
             if (RXSDebug.isDebug()) Timber.tag(tag).v("onError(%s)", e.toString());
-            customer.onError(e);
-            if (processor != null) processor.onError(e);
+            endHarvest(false);
         }
 
         @Override
         public void onComplete() {
             if (RXSDebug.isDebug()) Timber.tag(tag).v("onComplete()");
-            onError(new IOException("Upstream completed prematurely."));
+            endHarvest(false);
         }
 
         @Override

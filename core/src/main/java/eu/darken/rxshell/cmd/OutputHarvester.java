@@ -40,7 +40,7 @@ public class OutputHarvester extends Harvester<OutputHarvester.Crop> {
     static class OutputSub extends BaseSub<Crop> {
         private static final String TAG = Harvester.TAG + ":Output";
         private final Cmd cmd;
-        Integer exitCode;
+        int exitCode = Cmd.ExitCode.INITIAL;
 
         OutputSub(Subscriber<? super Crop> customer, Cmd cmd) {
             super(TAG, customer, cmd.isOutputBufferEnabled() ? new ArrayList<>() : null, cmd.getOutputProcessor());
@@ -80,8 +80,8 @@ public class OutputHarvester extends Harvester<OutputHarvester.Crop> {
         }
 
         @Override
-        Crop buildCropHarvest(@Nullable List<String> buffer) {
-            return new Crop(buffer, exitCode, true);
+        Crop buildCropHarvest(@Nullable List<String> buffer, boolean isComplete) {
+            return new Crop(buffer, exitCode, isComplete);
         }
     }
 }
