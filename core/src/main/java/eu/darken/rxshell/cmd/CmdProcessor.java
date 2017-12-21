@@ -89,14 +89,12 @@ public class CmdProcessor {
                     if (RXSDebug.isDebug()) Timber.tag(TAG).d("Processing: %s", item.cmd);
                     final Observable<OutputHarvester.Crop> outputs = session.outputLines()
                             .compose(upstream -> factory.forOutput(upstream, item.cmd))
-                            .onErrorReturnItem(new OutputHarvester.Crop(null, Cmd.ExitCode.SHELL_DIED, false))
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("outputLine():doOnEach: %s", n); })
                             .toObservable().cache();
                     outputs.subscribe(s -> {}, e -> {});
 
                     final Observable<Harvester.Crop> errors = session.errorLines()
                             .compose(upstream -> factory.forError(upstream, item.cmd))
-                            .onErrorReturnItem(new ErrorHarvester.Crop(null, false))
                             .doOnEach(n -> { if (RXSDebug.isDebug()) Timber.tag(TAG).v("errorLines():doOnEach: %s", n); })
                             .toObservable().cache();
                     errors.subscribe(s -> {}, e -> {});
