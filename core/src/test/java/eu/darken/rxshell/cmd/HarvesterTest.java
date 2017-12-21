@@ -6,7 +6,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -17,6 +16,7 @@ import io.reactivex.subscribers.TestSubscriber;
 import testtools.BaseTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.when;
@@ -113,7 +113,11 @@ public class HarvesterTest extends BaseTest {
         publisher.onNext("some-output");
         publisher.onComplete();
 
-        testSubscriber.assertValueCount(0).assertError(IOException.class);
+        OutputHarvester.Crop crop = testSubscriber.assertValueCount(1).assertComplete().values().get(0);
+        assertThat(crop.isComplete, is(false));
+        assertThat(crop.exitCode, is(Cmd.ExitCode.INITIAL));
+        assertThat(crop.buffer.size(), is(1));
+        assertThat(crop.buffer, contains("some-output"));
     }
 
     @Test
@@ -128,27 +132,34 @@ public class HarvesterTest extends BaseTest {
         publisher.onNext("some-errors");
         publisher.onComplete();
 
-        testSubscriber.assertValueCount(0).assertError(IOException.class);
+        ErrorHarvester.Crop crop = testSubscriber.assertValueCount(1).assertComplete().values().get(0);
+        assertThat(crop.isComplete, is(false));
+        assertThat(crop.buffer.size(), is(1));
+        assertThat(crop.buffer, contains("some-errors"));
     }
 
     @Test
     public void testUpstreamTerminated_output() {
         publisher.onComplete();
-        publisher.compose(harvesterFactory.forOutput(publisher, cmd)).test().assertTerminated().assertError(IOException.class);
+        OutputHarvester.Crop crop = publisher.compose(harvesterFactory.forOutput(publisher, cmd)).test().assertComplete().assertValueCount(1).values().get(0);
+        assertThat(crop.isComplete, is(false));
 
         publisher = PublishProcessor.create();
         publisher.onError(new InterruptedException());
-        publisher.compose(harvesterFactory.forOutput(publisher, cmd)).test().assertTerminated().assertError(InterruptedException.class);
+        crop = publisher.compose(harvesterFactory.forOutput(publisher, cmd)).test().assertComplete().assertValueCount(1).values().get(0);
+        assertThat(crop.isComplete, is(false));
     }
 
     @Test
     public void testUpstreamTerminated_error() {
         publisher.onComplete();
-        publisher.compose(harvesterFactory.forError(publisher, cmd)).test().assertTerminated().assertError(IOException.class);
+        ErrorHarvester.Crop crop = publisher.compose(harvesterFactory.forError(publisher, cmd)).test().assertComplete().assertValueCount(1).values().get(0);
+        assertThat(crop.isComplete, is(false));
 
         publisher = PublishProcessor.create();
         publisher.onError(new InterruptedException());
-        publisher.compose(harvesterFactory.forError(publisher, cmd)).test().assertTerminated().assertError(InterruptedException.class);
+        crop = publisher.compose(harvesterFactory.forError(publisher, cmd)).test().assertComplete().assertValueCount(1).values().get(0);
+        assertThat(crop.isComplete, is(false));
     }
 
     @Test
