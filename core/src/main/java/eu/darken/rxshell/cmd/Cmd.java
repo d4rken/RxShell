@@ -301,6 +301,7 @@ public class Cmd {
 
         /**
          * Convenience method for {@link #submit(RxCmdShell)} using {@link Single#blockingGet()}
+         * <br>If a shell can't be opened {@link ExitCode#EXCEPTION} will be returned and an error message.
          */
         public Result execute(RxCmdShell shell) {
             return submit(shell)
