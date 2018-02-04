@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -300,9 +301,12 @@ public class Cmd {
 
         /**
          * Convenience method for {@link #submit(RxCmdShell)} using {@link Single#blockingGet()}
+         * <br>If a shell can't be opened {@link ExitCode#EXCEPTION} will be returned and an error message.
          */
         public Result execute(RxCmdShell shell) {
-            return submit(shell).blockingGet();
+            return submit(shell)
+                    .onErrorReturn(err -> new Result(build(), ExitCode.EXCEPTION, null, Collections.singletonList(err.toString())))
+                    .blockingGet();
         }
     }
 
