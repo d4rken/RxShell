@@ -150,12 +150,15 @@ public class CmdBuilderTest extends BaseTest {
         verify(session).close();
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testExecute_oneshot_exception() throws IOException {
         RxCmdShell shell = mock(RxCmdShell.class);
-        when(shell.open()).thenReturn(Single.error(new IOException()));
+        Exception ex = new IOException("Error message");
+        when(shell.open()).thenReturn(Single.error(ex));
         when(shell.isAlive()).thenReturn(Single.just(false));
 
-        Cmd.builder("").execute(shell);
+        final Cmd.Result result = Cmd.builder("").execute(shell);
+        assertThat(result.getExitCode(), is(Cmd.ExitCode.EXCEPTION));
+        assertThat(result.getErrors(), contains(ex.toString()));
     }
 }
