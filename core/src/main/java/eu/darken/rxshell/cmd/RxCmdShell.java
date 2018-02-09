@@ -300,25 +300,6 @@ public class RxCmdShell {
         public Single<Session> open() {
             return build().open();
         }
-
-        /**
-         * Convenience method for {@link #open()} that throws a checked Exception.
-         * <p>E.g.
-         * <br>When you try to open a root shell, but the user denies it, you get an {@link IOException},
-         * <br>instead of a wrapped {@link RuntimeException} when using {@link #open()} with {@link Single#blockingGet()}
-         *
-         * @return an open {@link Session}
-         * @throws IOException if the shell process, e.g. `su` or `sh` can't be opened.
-         */
-        public Session blockingOpen() throws IOException {
-            try {
-                return open().blockingGet();
-            } catch (RuntimeException e) {
-                if (e.getCause() instanceof IOException) {
-                    throw (IOException) e.getCause();
-                } else throw e;
-            }
-        }
     }
 
 }
