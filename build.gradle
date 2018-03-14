@@ -20,6 +20,11 @@ allprojects {
         globalCompileSdkVersion = 27
         globalBuildToolsVersion = '27.0.1'
         supportLibVersion = '27.0.2'
+        timberVersion = '4.6.1'
+        rxJavaVersion = '2.1.6'
+        jUnitVersion = '4.12'
+        mockitoVersion = '2.8.9'
+        awaitilityVersion = '3.0.0'
     }
 }
 
