@@ -28,15 +28,6 @@ public class RxCmdShellBuilderTest extends BaseTest {
     }
 
     @Test
-    public void testAutoRxShellCreation() {
-        final RxCmdShell.Builder shellBuilder = RxCmdShell.builder();
-        assertThat(shellBuilder.getRxShell(), is(nullValue()));
-        shellBuilder.build();
-        assertThat(shellBuilder.getRxShell(), is(not(nullValue())));
-    }
-
-
-    @Test
     public void testEnvironmentBuilding() {
         RxCmdShell.Builder shellBuilder = RxCmdShell.builder();
         assertThat(shellBuilder.getEnvironment().isEmpty(), is(true));

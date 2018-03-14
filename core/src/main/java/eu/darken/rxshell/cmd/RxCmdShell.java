@@ -40,10 +40,10 @@ public class RxCmdShell {
         throw new InstantiationException("Use the builder()!");
     }
 
-    RxCmdShell(Builder builder) {
+    RxCmdShell(Builder builder, RxShell rxShell) {
         environment = builder.getEnvironment();
-        rxShell = builder.getRxShell();
         processorFactory = builder.getProcessorFactory();
+        this.rxShell = rxShell;
     }
 
     /**
@@ -216,14 +216,9 @@ public class RxCmdShell {
         private final Map<String, String> environment = new HashMap<>();
         private final CmdProcessor.Factory processorFactory = new CmdProcessor.Factory(new Harvester.Factory());
         private boolean useRoot = false;
-        private RxShell rxShell;
 
         CmdProcessor.Factory getProcessorFactory() {
             return processorFactory;
-        }
-
-        RxShell getRxShell() {
-            return rxShell;
         }
 
         /**
@@ -283,13 +278,13 @@ public class RxCmdShell {
             for (HasEnvironmentVariables envVars : envVarSources) {
                 shellEnvironment(envVars.getEnvironmentVariables(useRoot));
             }
-            if (rxShell == null) {
-                final ProcessFactory processFactory = new DefaultProcessFactory();
-                final ProcessKiller processKiller = useRoot ? new RootKiller(processFactory) : new UserKiller();
-                final String command = useRoot ? "su" : "sh";
-                rxShell = new RxShell(new RxProcess(processFactory, processKiller, command));
-            }
-            return new RxCmdShell(this);
+
+            final ProcessFactory processFactory = new DefaultProcessFactory();
+            final ProcessKiller processKiller = useRoot ? new RootKiller(processFactory) : new UserKiller();
+            final String command = useRoot ? "su" : "sh";
+            RxShell rxShell = new RxShell(new RxProcess(processFactory, processKiller, command));
+
+            return new RxCmdShell(this, rxShell);
         }
 
         /**

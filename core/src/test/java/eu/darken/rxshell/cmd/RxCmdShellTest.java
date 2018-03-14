@@ -44,8 +44,6 @@ public class RxCmdShellTest extends BaseTest {
         BehaviorSubject<Boolean> idlePub = BehaviorSubject.createDefault(true);
         when(cmdProcessor.isIdle()).thenReturn(idlePub);
 
-        when(builder.getRxShell()).thenReturn(rxShell);
-
         when(rxShell.open()).thenReturn(Single.create(emitter -> {
             when(rxShellSession.waitFor()).thenReturn(Single.create(e -> waitForEmitter = e));
             emitter.onSuccess(rxShellSession);
@@ -71,14 +69,13 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testInstantiation() {
-        new RxCmdShell(builder);
-        verify(builder).getRxShell();
+        new RxCmdShell(builder, rxShell);
         verify(builder).getEnvironment();
     }
 
     @Test
     public void testOpen() {
-        RxCmdShell rxCmdShell = new RxCmdShell(builder);
+        RxCmdShell rxCmdShell = new RxCmdShell(builder, rxShell);
         rxCmdShell.open().test().awaitCount(1).assertNoTimeout();
         verify(rxShell).open();
     }
@@ -86,7 +83,7 @@ public class RxCmdShellTest extends BaseTest {
     @Test
     public void testOpen_exception() {
         doReturn(Single.error(new IOException())).when(rxShell).open();
-        RxCmdShell rxCmdShell = new RxCmdShell(builder);
+        RxCmdShell rxCmdShell = new RxCmdShell(builder, rxShell);
         rxCmdShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertError(IOException.class);
         verify(rxShell).open();
 
@@ -96,7 +93,7 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testCancel() {
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         RxCmdShell.Session session1 = shell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
         session1.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
 
@@ -110,7 +107,7 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testCancel_indirect() {
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         RxCmdShell.Session session1 = shell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
         session1.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
 
@@ -125,7 +122,7 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testCancel_thenClose() {
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         RxCmdShell.Session session1 = shell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
         session1.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
 
@@ -135,7 +132,7 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testCancel_thenClose_indirect() {
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         shell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
         shell.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
 
@@ -145,7 +142,7 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testClose() throws IOException {
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         RxCmdShell.Session session1 = shell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
         session1.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
 
@@ -159,7 +156,7 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testClose_indirect() {
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         RxCmdShell.Session session1 = shell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
         session1.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
 
@@ -173,7 +170,7 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testClose_thenCancel() {
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         RxCmdShell.Session session1 = shell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
         session1.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
 
@@ -183,7 +180,7 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testClose_thenCancel_indirect() {
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         shell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
         shell.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
 
@@ -193,7 +190,7 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testAlive() throws IOException {
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         RxCmdShell.Session session = shell.open().test().awaitCount(1).assertNoTimeout().values().get(0);
 
         when(rxShellSession.isAlive()).thenReturn(Single.just(false));
@@ -209,7 +206,7 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testAlive_indirect() {
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         shell.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(false);
 
         RxCmdShell.Session session = shell.open().test().awaitCount(1).assertNoTimeout().values().get(0);
@@ -227,7 +224,7 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testReinit() {
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         RxCmdShell.Session session1a = shell.open().test().awaitCount(1).assertNoTimeout().values().get(0);
         RxCmdShell.Session session1b = shell.open().test().awaitCount(1).assertNoTimeout().values().get(0);
         assertThat(session1a, is(session1b));
@@ -238,7 +235,7 @@ public class RxCmdShellTest extends BaseTest {
 
     @Test
     public void testReinit_exception() {
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         doReturn(Single.error(new IOException())).when(rxShell).open();
         shell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertError(IOException.class);
 
@@ -252,16 +249,15 @@ public class RxCmdShellTest extends BaseTest {
         envMap.put("key", "value");
         when(builder.getEnvironment()).thenReturn(envMap);
 
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         shell.open().test().awaitCount(1).assertNoTimeout();
         verify(rxShellSession).writeLine("key=value", true);
     }
 
-
     @Test
     public void testWaitFor() {
-        RxCmdShell rxShell = new RxCmdShell(builder);
-        RxCmdShell.Session session = rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
+        RxCmdShell.Session session = shell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
         session.waitFor().test().awaitDone(1, TimeUnit.SECONDS).assertTimeout();
 
         waitForEmitter.onSuccess(55);
@@ -273,7 +269,7 @@ public class RxCmdShellTest extends BaseTest {
         BehaviorSubject<Boolean> idler = BehaviorSubject.createDefault(false);
         when(cmdProcessor.isIdle()).thenReturn(idler);
 
-        RxCmdShell shell = new RxCmdShell(builder);
+        RxCmdShell shell = new RxCmdShell(builder, rxShell);
         shell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
         shell.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
 
