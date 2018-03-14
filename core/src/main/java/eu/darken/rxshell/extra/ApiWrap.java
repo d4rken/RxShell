@@ -14,10 +14,10 @@ public class ApiWrap {
     }
 
     /**
-     * @return if &gt;=19
+     * @return if &gt;=17
      */
-    public static boolean hasKitKat() {
-        return getCurrentSDKInt() >= Build.VERSION_CODES.KITKAT;
+    public static boolean hasJellyBeanMR1() {
+        return getCurrentSDKInt() >= Build.VERSION_CODES.JELLY_BEAN_MR1;
     }
 
     /**
@@ -25,6 +25,13 @@ public class ApiWrap {
      */
     public static boolean hasJellyBeanMR2() {
         return getCurrentSDKInt() >= Build.VERSION_CODES.JELLY_BEAN_MR2;
+    }
+
+    /**
+     * @return if &gt;=19
+     */
+    public static boolean hasKitKat() {
+        return getCurrentSDKInt() >= Build.VERSION_CODES.KITKAT;
     }
 
     /**
