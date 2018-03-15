@@ -100,7 +100,7 @@ public class SuBinary {
     }
 
     public static class Builder {
-        static final String TAG = "SuBinary:Factory";
+        static final String TAG = "RXS:Root:SuBinary";
         private static final Map<Pattern, Type> PATTERNMAP;
 
         static {

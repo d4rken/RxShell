@@ -48,7 +48,7 @@ public class SELinux {
     }
 
     public static class Builder {
-        static final String TAG = "SELinux:State";
+        static final String TAG = "RXS:Root:SELinux";
 
         private final static String SELINUX_GETENFORCE_DISABLED = "Disabled";
         private final static String SELINUX_GETENFORCE_PERMISSIVE = "Permissive";

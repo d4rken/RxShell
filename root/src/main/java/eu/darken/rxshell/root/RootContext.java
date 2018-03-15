@@ -15,7 +15,7 @@ import timber.log.Timber;
 public class RootContext {
 
     public static final RootContext EMPTY = new RootContext(
-            new Root(Root.State.DENIED),
+            new Root(Root.State.UNAVAILABLE),
             new SuBinary(SuBinary.Type.NONE, null, null, null),
             null,
             new SELinux(SELinux.State.ENFORCING),
@@ -38,10 +38,6 @@ public class RootContext {
         this.seLinux = seLinux;
         this.contextSwitch = contextSwitch;
         this.suApp = suApp;
-    }
-
-    public void relinquishRoot() {
-        root = new Root(Root.State.RELINQUISHED);
     }
 
     public boolean isRooted() {
@@ -74,7 +70,7 @@ public class RootContext {
     }
 
     public static class Builder {
-        static final String TAG = "RootContext:Factory";
+        static final String TAG = "RXS:Root:RootContext";
         private final Context context;
         private final RxCmdShell.Builder builder;
 

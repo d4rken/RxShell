@@ -51,8 +51,6 @@ public class RootContextTest extends BaseTest {
         assertThat(rootContext.isRooted(), is(true));
         when(root.getState()).thenReturn(Root.State.DENIED);
         assertThat(rootContext.isRooted(), is(false));
-        rootContext.relinquishRoot();
-        assertThat(rootContext.getRoot().getState(), is(Root.State.RELINQUISHED));
     }
 
 }

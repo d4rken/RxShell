@@ -81,7 +81,7 @@ public class SuApp {
     }
 
     public static class Builder {
-        static final String TAG = "Root:SuApp:Factory";
+        static final String TAG = "RXS:Root:SuApp";
         private static final Map<SuBinary.Type, String[]> SUAPP_MAPPING;
 
         static {

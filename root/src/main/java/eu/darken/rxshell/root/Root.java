@@ -12,7 +12,18 @@ import timber.log.Timber;
 public class Root {
 
     public enum State {
-        ROOTED, DENIED, UNAVAILABLE, RELINQUISHED
+        /**
+         * The device is rooted and access was granted (at least for the test).
+         */
+        ROOTED,
+        /**
+         * The device might be rooted, but access was denied.
+         */
+        DENIED,
+        /**
+         * Root is not available
+         */
+        UNAVAILABLE
     }
 
     private final State state;
@@ -44,7 +55,7 @@ public class Root {
     }
 
     public static class Builder {
-        static final String TAG = "Root:Factory";
+        static final String TAG = "RXS:Root:Root";
         private final SuBinary suBinary;
         private final RxCmdShell.Builder shellBuilder;
 
