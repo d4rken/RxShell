@@ -31,7 +31,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testCall_normal() {
         when(session.submit(any(Cmd.class))).thenAnswer(invocation -> Single.just(new Cmd.Result(invocation.getArgument(0), Cmd.ExitCode.OK)));
-        final SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        final SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.UNKNOWN));
     }
 
@@ -46,14 +46,14 @@ public class SuBinaryTest extends BaseTest {
                 return Single.just(new Cmd.Result(invocation.getArgument(0), Cmd.ExitCode.OK));
             }
         });
-        final SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        final SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.UNKNOWN));
     }
 
     @Test
     public void testParse_version() {
         when(session.submit(any(Cmd.class))).thenAnswer(invocation -> Single.just(new Cmd.Result(invocation.getArgument(0), Cmd.ExitCode.OK, Collections.singletonList("360.cn es 1.6.0.6"), new ArrayList<>())));
-        final SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        final SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.QIHOO_360));
         assertThat(suBinary.getVersion(), is("1.6.0.6"));
         assertThat(suBinary.getExtra(), is(nullValue()));
@@ -63,7 +63,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testParse_version_extra() {
         when(session.submit(any(Cmd.class))).thenAnswer(invocation -> Single.just(new Cmd.Result(invocation.getArgument(0), Cmd.ExitCode.OK, Collections.singletonList("16 me.phh.superuser cm-su"), new ArrayList<>())));
-        final SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        final SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.SE_SUPERUSER));
         assertThat(suBinary.getVersion(), is("16"));
         assertThat(suBinary.getExtra(), is("me.phh.superuser cm-su"));
@@ -90,7 +90,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_supersu() {
         fakeOutput("2.25:SUPERSU");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.CHAINFIRE_SUPERSU));
         assertThat(suBinary.getVersion(), is("2.25"));
         assertThat(suBinary.getExtra(), is("SUPERSU"));
@@ -99,13 +99,13 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_superuser_koush() {
         fakeOutput("16 com.koushikdutta.superuser");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.KOUSH_SUPERUSER));
         assertThat(suBinary.getVersion(), is("16"));
         assertThat(suBinary.getExtra(), is("com.koushikdutta.superuser"));
 
         fakeOutput("16 com.thirdparty.superuser");
-        suBinary = new SuBinary.Builder(session).build().blockingGet();
+        suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.KOUSH_SUPERUSER));
         assertThat(suBinary.getVersion(), is("16"));
         assertThat(suBinary.getExtra(), is("com.thirdparty.superuser"));
@@ -114,7 +114,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_kinguser() {
         fakeOutput("3.43:kinguser_su");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.KINGUSER));
         assertThat(suBinary.getVersion(), is("3.43"));
         assertThat(suBinary.getExtra(), is("kinguser_su"));
@@ -123,13 +123,13 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_kingouser() {
         fakeOutput("13 com.kingouser.com");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.KINGOUSER));
         assertThat(suBinary.getVersion(), is("13"));
         assertThat(suBinary.getExtra(), is("com.kingouser.com"));
 
         fakeOutput("kingo 141");
-        suBinary = new SuBinary.Builder(session).build().blockingGet();
+        suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.KINGOUSER));
         assertThat(suBinary.getVersion(), is("141"));
         assertThat(suBinary.getExtra(), is(nullValue()));
@@ -138,7 +138,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_cyanogen() {
         fakeOutput("16 com.android.settings");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.CYANOGENMOD));
         assertThat(suBinary.getVersion(), is("16"));
         assertThat(suBinary.getExtra(), is("com.android.settings"));
@@ -147,19 +147,19 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_chainsDD() {
         fakeOutput("3.3");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.CHAINSDD_SUPERUSER));
         assertThat(suBinary.getVersion(), is("3.3"));
         assertThat(suBinary.getExtra(), is(""));
 
         fakeOutput("3.1l");
-        suBinary = new SuBinary.Builder(session).build().blockingGet();
+        suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.CHAINSDD_SUPERUSER));
         assertThat(suBinary.getVersion(), is("3.1"));
         assertThat(suBinary.getExtra(), is("l"));
 
         fakeOutput("2.3.1-abcdefgh");
-        suBinary = new SuBinary.Builder(session).build().blockingGet();
+        suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.CHAINSDD_SUPERUSER));
         assertThat(suBinary.getVersion(), is("2.3.1"));
         assertThat(suBinary.getExtra(), is("-abcdefgh"));
@@ -168,7 +168,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_vroot() {
         fakeOutput("11 com.mgyun.test");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.VROOT));
         assertThat(suBinary.getVersion(), is("11"));
         assertThat(suBinary.getExtra(), is("com.mgyun.test"));
@@ -177,7 +177,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_venomsu() {
         fakeOutput("Venom SuperUser v21");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.VENOMSU));
         assertThat(suBinary.getVersion(), is("v21"));
         assertThat(suBinary.getExtra(), is(nullValue()));
@@ -186,7 +186,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_qihoo() {
         fakeOutput("360.cn es 1.6.0.6");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.QIHOO_360));
         assertThat(suBinary.getVersion(), is("1.6.0.6"));
         assertThat(suBinary.getExtra(), is(nullValue()));
@@ -195,13 +195,13 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_miui() {
         fakeOutput("15 com.lbe.security.miui");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.MIUI));
         assertThat(suBinary.getVersion(), is("15"));
         assertThat(suBinary.getExtra(), is("com.lbe.security.miui"));
 
         fakeOutput("15 com.miui.uac");
-        suBinary = new SuBinary.Builder(session).build().blockingGet();
+        suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.MIUI));
         assertThat(suBinary.getVersion(), is("15"));
         assertThat(suBinary.getExtra(), is("com.miui.uac"));
@@ -210,7 +210,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_BaiduEasyRoot() {
         fakeOutput("15 com.baidu.easyroot");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.BAIDU_EASYROOT));
         assertThat(suBinary.getVersion(), is("15"));
         assertThat(suBinary.getExtra(), is("com.baidu.easyroot"));
@@ -219,7 +219,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_dianxinos() {
         fakeOutput("26 com.dianxinos.superuser");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.DIANXINOSSUPERUSER));
         assertThat(suBinary.getVersion(), is("26"));
         assertThat(suBinary.getExtra(), is("com.dianxinos.superuser"));
@@ -228,7 +228,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_BaiyiEasyRoot() {
         fakeOutput("16 com.baiyi_mobile.easyroot");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.BAIYI_MOBILE_EASYROOT));
         assertThat(suBinary.getVersion(), is("16"));
         assertThat(suBinary.getExtra(), is("com.baiyi_mobile.easyroot"));
@@ -237,7 +237,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_tencent() {
         fakeOutput("16 com.tencent.qrom.appmanager");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.TENCENT_APPMANAGER));
         assertThat(suBinary.getVersion(), is("16"));
         assertThat(suBinary.getExtra(), is("com.tencent.qrom.appmanager"));
@@ -246,7 +246,7 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_phh() {
         fakeOutput("16 me.phh.superuser cm-su");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.SE_SUPERUSER));
         assertThat(suBinary.getVersion(), is("16"));
         assertThat(suBinary.getExtra(), is("me.phh.superuser cm-su"));
@@ -255,13 +255,13 @@ public class SuBinaryTest extends BaseTest {
     @Test
     public void testDetection_magisk() {
         fakeOutput("16.0:MAGISKSU (topjohnwu)");
-        SuBinary suBinary = new SuBinary.Builder(session).build().blockingGet();
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.MAGISKSU));
         assertThat(suBinary.getVersion(), is("16.0"));
         assertThat(suBinary.getExtra(), is(nullValue()));
 
         fakeOutput("16.1 (180311):MAGISKSU (topjohnwu)");
-        suBinary = new SuBinary.Builder(session).build().blockingGet();
+        suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.MAGISKSU));
         assertThat(suBinary.getVersion(), is("16.1 (180311)"));
         assertThat(suBinary.getExtra(), is(nullValue()));

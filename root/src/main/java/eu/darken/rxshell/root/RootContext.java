@@ -1,7 +1,7 @@
 package eu.darken.rxshell.root;
 
 import android.content.Context;
-import android.support.annotation.VisibleForTesting;
+import android.support.annotation.Nullable;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -30,9 +30,9 @@ public class RootContext {
     private final ContextSwitch contextSwitch;
     private final SELinux seLinux;
     private final SuApp suApp;
-    private Root root;
+    private final Root root;
 
-    RootContext(Root root, SuBinary suBinary, SuApp suApp, SELinux seLinux, ContextSwitch contextSwitch) {
+    public RootContext(Root root, SuBinary suBinary, SuApp suApp, SELinux seLinux, ContextSwitch contextSwitch) {
         this.root = root;
         this.suBinary = suBinary;
         this.seLinux = seLinux;
@@ -72,16 +72,39 @@ public class RootContext {
     public static class Builder {
         static final String TAG = "RXS:Root:RootContext";
         private final Context context;
-        private final RxCmdShell.Builder builder;
+        private RxCmdShell.Builder shellBuilder;
+        @Nullable private SELinux.Builder seLinuxBuilder;
+        @Nullable private SuBinary.Builder suBinaryBuilder;
+        @Nullable private SuApp.Builder suAppBuilder;
+        @Nullable private Root.Builder rootBuilder;
 
         public Builder(Context context) {
-            this(context, new RxCmdShell.Builder());
+            this.context = context;
         }
 
-        @VisibleForTesting
-        Builder(Context context, RxCmdShell.Builder builder) {
-            this.context = context;
-            this.builder = builder;
+        public Builder shellBuilder(RxCmdShell.Builder builder) {
+            this.shellBuilder = builder;
+            return this;
+        }
+
+        public Builder rootBuilder(@Nullable Root.Builder rootBuilder) {
+            this.rootBuilder = rootBuilder;
+            return this;
+        }
+
+        public Builder suAppBuilder(@Nullable SuApp.Builder suAppBuilder) {
+            this.suAppBuilder = suAppBuilder;
+            return this;
+        }
+
+        public Builder suBinaryBuilder(@Nullable SuBinary.Builder suBinaryBuilder) {
+            this.suBinaryBuilder = suBinaryBuilder;
+            return this;
+        }
+
+        public Builder seLinuxBuilder(@Nullable SELinux.Builder seLinuxBuilder) {
+            this.seLinuxBuilder = seLinuxBuilder;
+            return this;
         }
 
         public Single<RootContext> build() {
@@ -89,19 +112,24 @@ public class RootContext {
                 Timber.tag(TAG).d("Building RootContext...");
                 RxCmdShell.Session shell = null;
                 try {
-                    shell = RxCmdShellHelper.blockingOpen(builder);
+                    if (shellBuilder == null) shellBuilder = RxCmdShell.builder();
+                    shell = RxCmdShellHelper.blockingOpen(shellBuilder);
 
-                    SELinux seLinux = new SELinux.Builder(shell).build().blockingGet();
+                    if (seLinuxBuilder == null) seLinuxBuilder = new SELinux.Builder();
+                    SELinux seLinux = seLinuxBuilder.session(shell).build().blockingGet();
                     Timber.tag(TAG).d("SeLinux: %s", seLinux);
 
-                    SuBinary suBinary = new SuBinary.Builder(shell).build().blockingGet();
+                    if (suBinaryBuilder == null) suBinaryBuilder = new SuBinary.Builder();
+                    SuBinary suBinary = suBinaryBuilder.session(shell).build().blockingGet();
                     Timber.tag(TAG).d("SuBinary: %s", suBinary);
 
-                    SuApp suApp = new SuApp.Builder(context.getPackageManager(), suBinary).build().blockingGet();
+                    if (suAppBuilder == null) suAppBuilder = new SuApp.Builder(context.getPackageManager());
+                    SuApp suApp = suAppBuilder.build(suBinary).blockingGet();
                     Timber.tag(TAG).d("SuApp: %s", suApp);
 
-                    Root rootState = new Root.Builder(builder, suBinary).build().blockingGet();
-                    Timber.tag(TAG).d("RootState: %s", rootState);
+                    if (rootBuilder == null) rootBuilder = new Root.Builder();
+                    Root root = rootBuilder.suBinary(suBinary).build().blockingGet();
+                    Timber.tag(TAG).d("Root: %s", root);
 
                     ContextSwitch contextSwitch;
                     if (suBinary.getType() == SuBinary.Type.CHAINFIRE_SUPERSU) {
@@ -109,7 +137,7 @@ public class RootContext {
                     } else {
                         contextSwitch = (context, command) -> command;
                     }
-                    emitter.onSuccess(new RootContext(rootState, suBinary, suApp, seLinux, contextSwitch));
+                    emitter.onSuccess(new RootContext(root, suBinary, suApp, seLinux, contextSwitch));
                 } catch (IOException e) {
                     emitter.onError(e);
                 } finally {

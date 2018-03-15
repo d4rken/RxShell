@@ -46,7 +46,7 @@ public class SuBinary {
     private final String version;
     private final List<String> raw;
 
-    SuBinary(Type type, @Nullable String version, @Nullable String extra, List<String> raw) {
+    public SuBinary(Type type, @Nullable String version, @Nullable String extra, List<String> raw) {
         this.type = type;
         this.version = version;
         this.extra = extra;
@@ -148,15 +148,23 @@ public class SuBinary {
             PATTERNMAP.put(Pattern.compile("^(.+?):(?:MAGISKSU).*?$"), Type.MAGISKSU);
         }
 
-        private final RxCmdShell.Session shellSession;
+        private RxCmdShell.Session session;
 
-        public Builder(RxCmdShell.Session shellSession) {
-            this.shellSession = shellSession;
+        public Builder() {
+        }
+
+        public Builder session(@Nullable RxCmdShell.Session shellSession) {
+            this.session = shellSession;
+            return this;
         }
 
         public Single<SuBinary> build() {
             return Single.create(emitter -> {
-                Cmd.Result result = Cmd.builder("su --version").execute(shellSession);
+                Cmd.Builder cmdBuilder = Cmd.builder("su --version");
+
+                Cmd.Result result;
+                if (session != null) result = cmdBuilder.execute(session);
+                else result = cmdBuilder.execute(RxCmdShell.builder().build());
 
                 if (result.getExitCode() != Cmd.ExitCode.OK && result.getExitCode() != Cmd.ExitCode.EXCEPTION) {
                     result = Cmd
@@ -167,7 +175,7 @@ public class SuBinary {
                                     "su -V"
                             )
                             .timeout(5000)
-                            .execute(shellSession);
+                            .execute(session);
                 }
 
                 Type type = Type.NONE;

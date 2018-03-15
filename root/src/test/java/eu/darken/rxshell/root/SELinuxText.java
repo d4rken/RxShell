@@ -29,7 +29,7 @@ public class SELinuxText extends BaseTest {
     @Test
     public void testDetection_old_api() {
         ApiWrap.setSDKInt(0);
-        SELinux seLinux = new SELinux.Builder(session).build().blockingGet();
+        SELinux seLinux = new SELinux.Builder().session(session).build().blockingGet();
         assertThat(seLinux.getState(), is(SELinux.State.DISABLED));
     }
 
@@ -44,7 +44,7 @@ public class SELinuxText extends BaseTest {
                 return Single.just(new Cmd.Result(cmd, 1));
             }
         });
-        SELinux seLinux = new SELinux.Builder(session).build().blockingGet();
+        SELinux seLinux = new SELinux.Builder().session(session).build().blockingGet();
         assertThat(seLinux.getState(), is(SELinux.State.DISABLED));
     }
 
@@ -59,7 +59,7 @@ public class SELinuxText extends BaseTest {
                 return Single.just(new Cmd.Result(cmd, 1));
             }
         });
-        SELinux seLinux = new SELinux.Builder(session).build().blockingGet();
+        SELinux seLinux = new SELinux.Builder().session(session).build().blockingGet();
         assertThat(seLinux.getState(), is(SELinux.State.PERMISSIVE));
     }
 
@@ -74,7 +74,7 @@ public class SELinuxText extends BaseTest {
                 return Single.just(new Cmd.Result(cmd, 1));
             }
         });
-        SELinux seLinux = new SELinux.Builder(session).build().blockingGet();
+        SELinux seLinux = new SELinux.Builder().session(session).build().blockingGet();
         assertThat(seLinux.getState(), is(SELinux.State.ENFORCING));
     }
 
@@ -85,12 +85,12 @@ public class SELinuxText extends BaseTest {
             Cmd cmd = invocation.getArgument(0);
             return Single.just(new Cmd.Result(cmd, 1));
         });
-        SELinux between17And19 = new SELinux.Builder(session).build().blockingGet();
+        SELinux between17And19 = new SELinux.Builder().session(session).build().blockingGet();
         assertThat(between17And19.getState(), is(SELinux.State.PERMISSIVE));
 
 
         ApiWrap.setSDKInt(19);
-        SELinux above19OrLater = new SELinux.Builder(session).build().blockingGet();
+        SELinux above19OrLater = new SELinux.Builder().session(session).build().blockingGet();
         assertThat(above19OrLater.getState(), is(SELinux.State.ENFORCING));
     }
 

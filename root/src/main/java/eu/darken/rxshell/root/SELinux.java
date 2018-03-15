@@ -1,6 +1,8 @@
 package eu.darken.rxshell.root;
 
 
+import android.support.annotation.Nullable;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -21,7 +23,7 @@ public class SELinux {
 
     private final State state;
 
-    SELinux(State state) {this.state = state;}
+    public SELinux(State state) {this.state = state;}
 
     public State getState() {
         return state;
@@ -53,11 +55,15 @@ public class SELinux {
         private final static String SELINUX_GETENFORCE_DISABLED = "Disabled";
         private final static String SELINUX_GETENFORCE_PERMISSIVE = "Permissive";
         private final static String SELINUX_GETENFORCE_ENFORCING = "Enforcing";
+        private RxCmdShell.Session session;
 
-        private final RxCmdShell.Session shellSession;
+        public Builder() {
 
-        public Builder(RxCmdShell.Session shellSession) {
-            this.shellSession = shellSession;
+        }
+
+        public Builder session(@Nullable RxCmdShell.Session shellSession) {
+            this.session = shellSession;
+            return this;
         }
 
         public Single<SELinux> build() {
@@ -84,7 +90,12 @@ public class SELinux {
                     }
 
                     if (state == null) {
-                        Cmd.Result result = Cmd.builder("getenforce").timeout(5000).execute(shellSession);
+                        final Cmd.Builder cmdBuilder = Cmd.builder("getenforce").timeout(5000);
+
+                        Cmd.Result result;
+                        if (session != null) result = cmdBuilder.execute(session);
+                        else result = cmdBuilder.execute(RxCmdShell.builder().build());
+
                         if (result.getExitCode() == Cmd.ExitCode.OK) {
                             //noinspection ConstantConditions
                             for (String line : result.getOutput()) {

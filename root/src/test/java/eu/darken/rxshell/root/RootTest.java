@@ -10,6 +10,7 @@ import org.mockito.junit.MockitoRule;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 import eu.darken.rxshell.cmd.Cmd;
 import eu.darken.rxshell.cmd.RxCmdShell;
@@ -45,7 +46,7 @@ public class RootTest extends BaseTest {
     @Test
     public void testUnrooted() {
         when(suBinary.getType()).thenReturn(SuBinary.Type.NONE);
-        final Root.Builder builder = new Root.Builder(shellBuilder, suBinary);
+        final Root.Builder builder = new Root.Builder();
 
         when(shellSession.submit(any(Cmd.class))).thenAnswer(invocation -> {
             Cmd cmd = invocation.getArgument(0);
@@ -54,7 +55,7 @@ public class RootTest extends BaseTest {
             } else return Single.error(new Exception("Unexpected state"));
         });
 
-        final Root root = builder.build().blockingGet();
+        final Root root = builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet();
         assertThat(root.getState(), is(Root.State.UNAVAILABLE));
     }
 
@@ -67,12 +68,32 @@ public class RootTest extends BaseTest {
             } else return Single.error(new Exception("Unexpected state"));
         });
         when(suBinary.getType()).thenReturn(SuBinary.Type.CHAINFIRE_SUPERSU);
-        Root.Builder builder = new Root.Builder(shellBuilder, suBinary);
-        assertThat(builder.build().blockingGet().getState(), is(Root.State.ROOTED));
+        Root.Builder builder = new Root.Builder();
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.ROOTED));
 
         when(suBinary.getType()).thenReturn(SuBinary.Type.UNKNOWN);
-        builder = new Root.Builder(shellBuilder, suBinary);
-        assertThat(builder.build().blockingGet().getState(), is(Root.State.ROOTED));
+        builder = new Root.Builder();
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.ROOTED));
+    }
+
+    @Test
+    public void testRooted_timeout() {
+        when(shellSession.submit(any(Cmd.class))).thenAnswer(invocation -> {
+            Cmd cmd = invocation.getArgument(0);
+            if (cmd.getCommands().contains("id")) {
+                return Single.just(new Cmd.Result(cmd, Cmd.ExitCode.OK, Collections.singletonList("uid=0(root) gid=0(root) groups=0(root) context=u:r:supersu:s0"), new ArrayList<>()));
+            } else return Single.error(new Exception("Unexpected state"));
+        });
+        when(shell.open()).thenReturn(Single.just(shellSession).delay(2000, TimeUnit.MILLISECONDS));
+
+        Root.Builder builder = new Root.Builder();
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.ROOTED));
+
+        builder = new Root.Builder().timeout(1000);
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.UNAVAILABLE));
+
+        builder = new Root.Builder();
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.ROOTED));
     }
 
     @Test
@@ -85,12 +106,12 @@ public class RootTest extends BaseTest {
         });
 
         when(suBinary.getType()).thenReturn(SuBinary.Type.UNKNOWN);
-        Root.Builder builder = new Root.Builder(shellBuilder, suBinary);
-        assertThat(builder.build().blockingGet().getState(), is(Root.State.UNAVAILABLE));
+        Root.Builder builder = new Root.Builder();
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.UNAVAILABLE));
 
         when(suBinary.getType()).thenReturn(SuBinary.Type.KINGOUSER);
-        builder = new Root.Builder(shellBuilder, suBinary);
-        assertThat(builder.build().blockingGet().getState(), is(Root.State.ROOTED));
+        builder = new Root.Builder();
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.ROOTED));
     }
 
     @Test
@@ -105,8 +126,8 @@ public class RootTest extends BaseTest {
         });
 
         when(suBinary.getType()).thenReturn(SuBinary.Type.UNKNOWN);
-        Root.Builder builder = new Root.Builder(shellBuilder, suBinary);
-        assertThat(builder.build().blockingGet().getState(), is(Root.State.ROOTED));
+        Root.Builder builder = new Root.Builder();
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.ROOTED));
     }
 
     @Test
