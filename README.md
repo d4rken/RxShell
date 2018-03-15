@@ -8,7 +8,9 @@ A library that helps your app interact with shells on Android.
 ## Quickstart
 Include the library in your modules `build.gradle` file:
 ```groovy
-implementation 'eu.darken.rxshell:core:0.9.9'
+implementation 'eu.darken.rxshell:core:1.0.0'
+implementation 'eu.darken.rxshell:root:1.0.0' // For root related extensions
+
 ```
 
 Now your project is ready to use the library, let's quickly talk about a few core concepts:
@@ -46,6 +48,11 @@ shell.close().blockingGet();
 The default shell process is launched using `sh`, if you want to open a root shell (using `su`) tell the ShellBuilder!
 ```java
 Cmd.Result result = Cmd.builder("echo hello").execute(RxCmdShell.builder().root(true));
+```
+
+#### Checking root access
+```java
+new RootContext.Builder(getContext()).build().subscribe(c -> {/* c.getRoot().getState() */});
 ```
 
 ## Used by

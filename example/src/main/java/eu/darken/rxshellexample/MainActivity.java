@@ -11,13 +11,17 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import eu.darken.rxshell.cmd.Cmd;
 import eu.darken.rxshell.cmd.RxCmdShell;
+import eu.darken.rxshell.root.RootContext;
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity {
     @BindView(R.id.output) TextView output;
     @BindView(R.id.input) TextView input;
     @BindView(R.id.execute) Button execute;
+    @BindView(R.id.root_result) TextView rootResult;
     private RxCmdShell.Session session;
 
 
@@ -55,6 +59,14 @@ public class MainActivity extends AppCompatActivity {
                     output.append("\n");
                     output.append(result.toString());
                 });
+    }
+
+    @OnClick(R.id.check_root)
+    public void onCheckRoot(View v) {
+        final Single<RootContext> rootContextSingle = new RootContext.Builder(getApplicationContext()).build();
+        rootContextSingle.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(rootContext -> rootResult.setText(String.format("Root-State: %s", rootContext.getRoot().getState())));
     }
 
     @Override

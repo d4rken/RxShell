@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Shell Helper Example</string>
     <string name="run">Run</string>
+    <string name="action_check_root">Check root</string>
 </resources>

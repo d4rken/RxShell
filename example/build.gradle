@@ -31,6 +31,7 @@ android {
 }
 dependencies {
     implementation project(':core')
+    implementation project(':root')
 
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     implementation deps.support.appcompat
