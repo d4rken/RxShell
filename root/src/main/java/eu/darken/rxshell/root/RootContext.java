@@ -72,7 +72,7 @@ public class RootContext {
     public static class Builder {
         static final String TAG = "RXS:Root:RootContext";
         private final Context context;
-        private RxCmdShell.Builder shellBuilder;
+        @Nullable private RxCmdShell.Builder shellBuilder;
         @Nullable private SELinux.Builder seLinuxBuilder;
         @Nullable private SuBinary.Builder suBinaryBuilder;
         @Nullable private SuApp.Builder suAppBuilder;
@@ -82,7 +82,7 @@ public class RootContext {
             this.context = context;
         }
 
-        public Builder shellBuilder(RxCmdShell.Builder builder) {
+        public Builder shellBuilder(@Nullable RxCmdShell.Builder builder) {
             this.shellBuilder = builder;
             return this;
         }
