@@ -141,11 +141,7 @@ public class RootContext {
                 } catch (IOException e) {
                     emitter.onError(e);
                 } finally {
-                    try {
-                        RxCmdShellHelper.blockingClose(shell);
-                    } catch (IOException e) {
-                        Timber.tag(TAG).w(e);
-                    }
+                    RxCmdShellHelper.blockingClose(shell);
                 }
             });
         }
