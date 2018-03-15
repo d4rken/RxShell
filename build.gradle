@@ -1,31 +1,133 @@
 buildscript {
+    def versionMajor = 1
+    def versionMinor = 0
+    def versionPatch = 0
+
+    ext.versions = [
+            'versionCode'        : versionMajor * 10000 + versionMinor * 100 + versionPatch,
+            'versionName'        : "${versionMajor}.${versionMinor}.${versionPatch}",
+            'minSdk'             : 16,
+            'targetSdk'          : 27,
+            'compileSdk'         : 27,
+            'sourceCompatibility': JavaVersion.VERSION_1_8,
+            'targetCompatibility': JavaVersion.VERSION_1_8,
+            'supportLibrary'     : '27.0.2',
+            'buildTools'         : '27.0.1'
+    ]
+
+    def credentialsFile = new File(System.properties['user.home'], ".bintray/bintray.properties")
+    if (credentialsFile.canRead()) {
+        Properties props = new Properties()
+        props.load(new FileInputStream(credentialsFile))
+        ext.bintrayCredentials = [
+                bintrayUser  : props['bintray.user'],
+                bintrayApiKey: props['bintray.apikey']
+        ]
+    }
+
+    ext.bintrayConfig = [
+            bintrayRepo       : 'maven',
+            bintrayName       : 'rxshell',
+            publishedGroupId  : 'eu.darken.rxshell',
+
+            siteUrl           : 'https://github.com/d4rken/RxShell',
+            issuesUrl         : 'https://github.com/d4rken/RxShell/issues',
+            gitUrl            : 'https://github.com/d4rken/RxShell.git',
+
+            libraryVersion    : versions.versionName,
+
+            developerId       : 'darken',
+            developerName     : 'Matthias Urhahn',
+            developerEmail    : 'darken@darken.eu',
+
+            licenseName       : 'Apache-2.0',
+            licenseUrl        : 'https://github.com/d4rken/RxShell/blob/master/LICENSE',
+            allLicenses       : ["Apache-2.0"]
+    ]
+
+    ext.deps = [
+            'support'    : [
+                    'annotations': "com.android.support:support-annotations:${versions.supportLibrary}",
+                    'appcompat'  : "com.android.support:appcompat-v7:${versions.supportLibrary}"
+            ],
+            androidPlugin: 'com.android.tools.build:gradle:3.0.1',
+            timber       : "com.jakewharton.timber:timber:4.6.1",
+            rxJava       : "io.reactivex.rxjava2:rxjava:2.1.6",
+            rxJavaReplay : "com.jakewharton.rx2:replaying-share:2.0.1",
+            jUnit        : "junit:junit:4.12",
+            mockito      : "org.mockito:mockito-core:2.8.9",
+            awaitility   : "org.awaitility:awaitility:3.0.0",
+    ]
 
     repositories {
         google()
         jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
+        //noinspection GradleDependency
+        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.5.0-x'
     }
 }
+
+apply plugin: "com.github.kt3k.coveralls"
 
 allprojects {
     repositories {
         google()
         jcenter()
     }
-    ext {
-        globalMinSdkVersion = 16
-        globalTargetSdkVersion = 27
-        globalCompileSdkVersion = 27
-        globalBuildToolsVersion = '27.0.1'
-        supportLibVersion = '27.0.2'
-        timberVersion = '4.6.1'
-        rxJavaVersion = '2.1.6'
-        jUnitVersion = '4.12'
-        mockitoVersion = '2.8.9'
-        awaitilityVersion = '3.0.0'
+}
+
+subprojects { subProject ->
+    afterEvaluate {
+        def isLibrary = subProject.plugins.hasPlugin('android-library')
+
+        if (isLibrary) {
+            subProject.apply plugin: "com.github.dcendents.android-maven"
+            subProject.apply plugin: "com.jfrog.bintray"
+            subProject.apply plugin: "jacoco"
+
+            task javadoc(type: Javadoc) {
+                source = android.sourceSets.main.java.srcDirs
+                classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+            }
+
+            javadoc.classpath += files(android.libraryVariants.collect { variant ->
+                variant.javaCompiler.classpath.files
+            })
+
+            task jacocoReport(type: JacocoReport) {
+                group "Reporting"
+                description "Generate Jacoco coverage reports."
+
+                reports {
+                    xml.enabled = true
+                    html.enabled = true
+                }
+                classDirectories = fileTree(
+                        dir: './build/intermediates/classes/debug',
+                        excludes: ['eu/darken/R*.class',
+                                   '**/BuildConfig.class'
+                        ])
+                sourceDirectories = files([
+                        'src/main/java',
+                ])
+                executionData = fileTree(dir: "$project.buildDir", includes: ["jacoco/*.exec"])
+            }
+
+            if (hasProperty('bintrayCredentials')) {
+                apply from: '../publish-to-bintray.gradle'
+            }
+        }
     }
+}
+
+coveralls {
+    jacocoReportPath "$rootProject/build/reports/jacoco/jacocoReport/jacocoReport.xml"
 }
 
 task clean(type: Delete) {

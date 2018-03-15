@@ -1,122 +1,53 @@
-plugins {
-    id "com.github.dcendents.android-maven" version "2.0"
-    id "com.jfrog.bintray" version "1.8.0"
-    id "jacoco"
-    id "com.github.kt3k.coveralls" version "2.5.0-x"
-}
 apply plugin: 'com.android.library'
-
-def versionMajor = 0
-def versionMinor = 9
-def versionPatch = 9
-def myVersionCode = versionMajor * 10000 + versionMinor * 100 + versionPatch
-def myVersionName = "${versionMajor}.${versionMinor}.${versionPatch}"
 
 android {
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility versions.sourceCompatibility
+        targetCompatibility versions.targetCompatibility
     }
 
-    compileSdkVersion project.ext.globalCompileSdkVersion
-    buildToolsVersion project.ext.globalBuildToolsVersion
+    compileSdkVersion versions.compileSdk
+    buildToolsVersion versions.buildTools
 
     defaultConfig {
-        minSdkVersion project.ext.globalMinSdkVersion
-        targetSdkVersion project.ext.globalTargetSdkVersion
-        versionCode myVersionCode
-        versionName myVersionName
+        minSdkVersion versions.minSdk
+        targetSdkVersion versions.targetSdk
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        debug {
-        }
-        release {
-        }
-    }
     lintOptions {
+        textReport true
+        textOutput 'stdout'
         disable 'TimberTagLength'
     }
 }
 
 // https://stackoverflow.com/a/34572606/1251958
-task javadoc(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-}
-afterEvaluate {
-    javadoc.classpath += files(android.libraryVariants.collect { variant ->
-        variant.javaCompiler.classpath.files
-    })
-}
+//task javadoc(type: Javadoc) {
+//    source = android.sourceSets.main.java.srcDirs
+//    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+//}
+//afterEvaluate {
+//    javadoc.classpath += files(android.libraryVariants.collect { variant ->
+//        variant.javaCompiler.classpath.files
+//    })
+//}
 
 dependencies {
-    implementation "com.android.support:support-annotations:${supportLibVersion}"
-    implementation "com.android.support:support-compat:${supportLibVersion}"
-    implementation 'com.jakewharton.timber:timber:4.6.0'
-    api "io.reactivex.rxjava2:rxjava:${rxJavaVersion}"
-    api 'com.jakewharton.rx2:replaying-share:2.0.1'
+    implementation deps.support.annotations
+    implementation deps.support.appcompat
 
-    testImplementation "junit:junit:${jUnitVersion}"
-    testImplementation "org.mockito:mockito-core:${mockitoVersion}"
-    testImplementation "org.awaitility:awaitility:${awaitilityVersion}"
+    api deps.timber
+
+    api deps.rxJava
+    implementation deps.rxJavaReplay
+
+    testImplementation deps.jUnit
+    testImplementation deps.mockito
+    testImplementation deps.awaitility
 }
 
-task jacocoTestReport(type: JacocoReport, dependsOn: "testDebugUnitTest") {
-    reports {
-        xml.enabled = true
-        html.enabled = true
-    }
-    classDirectories = fileTree(
-            dir: './build/intermediates/classes/debug',
-            excludes: ['eu/darken/R*.class',
-                       '**/BuildConfig.class'
-            ])
-    sourceDirectories = files([
-            'src/main/java',
-    ])
-    executionData = files('build/jacoco/testDebugUnitTest.exec')
-}
-
-coveralls {
-    jacocoReportPath = 'build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml'
-    sourceDirs = ['src/main/java']
-}
-
-def credentialsFile = new File(System.properties['user.home'], ".bintray/bintray.properties")
-ext {
-    if (credentialsFile.canRead()) {
-        Properties props = new Properties()
-        props.load(new FileInputStream(credentialsFile))
-        bintrayUser = props['bintray.user']
-        bintrayApiKey = props['bintray.apikey']
-    }
-
-    bintrayRepo = 'maven'
-    bintrayName = 'rxshell'
-
-    publishedGroupId = 'eu.darken.rxshell'
-    libraryName = 'RxShell'
-    artifact = 'core'
-
-    libraryDescription = 'Android shells with RxJava support.'
-
-    siteUrl = 'https://github.com/d4rken/RxShell'
-    issuesUrl = 'https://github.com/d4rken/RxShell/issues'
-    gitUrl = 'https://github.com/d4rken/RxShell.git'
-
-    libraryVersion = myVersionName
-
-    developerId = 'darken'
-    developerName = 'Matthias Urhahn'
-    developerEmail = 'darken@darken.eu'
-
-    licenseName = 'Apache-2.0'
-    licenseUrl = 'https://github.com/d4rken/RxShell/blob/master/LICENSE'
-    allLicenses = ["Apache-2.0"]
-}
-if (credentialsFile.canRead()) {
-    apply from: '../publish-to-bintray.gradle'
-}
+bintrayConfig.libraryName = 'RxShell'
+bintrayConfig.artifact = 'core'
+bintrayConfig.libraryDescription = 'Android shells with RxJava support.'

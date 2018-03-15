@@ -1,33 +1,33 @@
 apply plugin: 'com.github.dcendents.android-maven'
-group = publishedGroupId
+group = bintrayConfig.publishedGroupId
 install {
     repositories.mavenInstaller {
         pom.project {
             packaging 'aar'
-            name libraryName
-            description libraryDescription
-            url siteUrl
+            name bintrayConfig.libraryName
+            description bintrayConfig.libraryDescription
+            url bintrayConfig.siteUrl
 
-            artifactId artifact
-            groupId publishedGroupId
-            version libraryVersion
+            artifactId bintrayConfig.artifact
+            groupId bintrayConfig.publishedGroupId
+            version bintrayConfig.libraryVersion
 
             licenses {
                 license {
-                    name licenseName
-                    url licenseUrl
+                    name bintrayConfig.licenseName
+                    url bintrayConfig.licenseUrl
                     distribution 'repo'
                 }
             }
             scm {
-                connection gitUrl
-                url siteUrl
+                connection bintrayConfig.gitUrl
+                url bintrayConfig.siteUrl
             }
             developers {
                 developer {
-                    id developerId
-                    name developerName
-                    email developerEmail
+                    id bintrayConfig.developerId
+                    name bintrayConfig.developerName
+                    email bintrayConfig.developerEmail
                 }
             }
         }
@@ -50,25 +50,25 @@ artifacts {
     archives javadocJar
     archives sourcesJar
 }
-version = libraryVersion
+version = bintrayConfig.libraryVersion
 
 // https://github.com/bintray/gradle-bintray-plugin#buildgradle
 bintray {
-    user = bintrayUser
-    key = bintrayApiKey
+    user = bintrayCredentials.bintrayUser
+    key = bintrayCredentials.bintrayApiKey
     configurations = ['archives']
     pkg {
-        repo = bintrayRepo
-        name = bintrayName
-        desc = libraryDescription
+        repo = bintrayConfig.bintrayRepo
+        name = bintrayConfig.bintrayName
+        desc = bintrayConfig.libraryDescription
 
         dryRun = false
         publish = true
 
         userOrg = user
-        licenses = allLicenses
-        vcsUrl = gitUrl
-        issueTrackerUrl = issuesUrl
+        licenses = bintrayConfig.allLicenses
+        vcsUrl = bintrayConfig.gitUrl
+        issueTrackerUrl = bintrayConfig.issuesUrl
 
         publicDownloadNumbers = true
     }
