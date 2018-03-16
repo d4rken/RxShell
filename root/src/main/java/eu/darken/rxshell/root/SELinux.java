@@ -61,6 +61,9 @@ public class SELinux {
 
         }
 
+        /**
+         * If you want to reuse an existing session.
+         */
         public Builder session(@Nullable RxCmdShell.Session shellSession) {
             this.session = shellSession;
             return this;

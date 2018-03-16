@@ -153,6 +153,9 @@ public class SuBinary {
         public Builder() {
         }
 
+        /**
+         * If you want to reuse an existing session.
+         */
         public Builder session(@Nullable RxCmdShell.Session shellSession) {
             this.session = shellSession;
             return this;

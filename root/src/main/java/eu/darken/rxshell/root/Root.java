@@ -69,16 +69,29 @@ public class Root {
 
         }
 
+        /**
+         * Use a specific shell builder instance
+         */
         public Builder shellBuilder(@Nullable RxCmdShell.Builder builder) {
             this.shellBuilder = builder;
             return this;
         }
 
+        /**
+         * Some su binaries return faulty exit codes despite allowing root.
+         * To handle that pass a su binary from {@link SuBinary.Builder}
+         */
         public Builder suBinary(@Nullable SuBinary binary) {
             this.suBinary = binary;
             return this;
         }
 
+        /**
+         * Configure a timeout for opening a root shell and command execution.<p>
+         * This includes the time the user takes to grant/deny a su manager app popup.
+         *
+         * @param timeout in milliseconds
+         */
         public Builder timeout(long timeout) {
             this.timeout = timeout;
             return this;
