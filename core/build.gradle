@@ -23,17 +23,6 @@ android {
     }
 }
 
-// https://stackoverflow.com/a/34572606/1251958
-//task javadoc(type: Javadoc) {
-//    source = android.sourceSets.main.java.srcDirs
-//    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-//}
-//afterEvaluate {
-//    javadoc.classpath += files(android.libraryVariants.collect { variant ->
-//        variant.javaCompiler.classpath.files
-//    })
-//}
-
 dependencies {
     implementation deps.support.annotations
     implementation deps.support.appcompat
