@@ -52,7 +52,12 @@ Cmd.Result result = Cmd.builder("echo hello").execute(RxCmdShell.builder().root(
 
 #### Checking root access
 ```java
+// General info
 new RootContext.Builder(getContext()).build().subscribe(c -> {/* c.getRoot().getState() */});
+// Just root state
+Root root = new Root.Builder().build().blockingGet();
+if(root.getState() == Root.State.ROOTED) /* yay */
+
 ```
 
 ## Used by
