@@ -21,16 +21,20 @@ android {
         textOutput 'stdout'
         disable 'TimberTagLength'
     }
+    buildTypes {
+        release {}
+        debug {}
+    }
 }
 
 dependencies {
     implementation project(':core')
 
-    implementation deps.support.annotations
+    api deps.support.annotations
 
-    implementation deps.timber
+    api deps.timber
 
-    api deps.rxJava
+    implementation deps.rxJava
 
     testImplementation deps.jUnit
     testImplementation deps.mockito
