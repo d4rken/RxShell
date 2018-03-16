@@ -26,26 +26,21 @@ android {
         debug {}
     }
 }
-afterEvaluate {
-    javadoc.classpath += files(android.libraryVariants.collect { variant ->
-        variant.javaCompiler.classpath.files
-    })
-}
+
 dependencies {
+    implementation project(':core')
+
     api deps.support.annotations
-    api deps.support.appcompat
 
     api deps.timber
 
     implementation deps.rxJava
-    implementation deps.rxJava
-    api deps.rxJavaReplay
 
     testImplementation deps.jUnit
     testImplementation deps.mockito
     testImplementation deps.awaitility
 }
 
-bintrayConfig.libraryName = 'RxShell'
-bintrayConfig.artifact = 'core'
-bintrayConfig.libraryDescription = 'Android shells with RxJava support.'
+bintrayConfig.libraryName = 'RxShell Root Extensions'
+bintrayConfig.artifact = 'root'
+bintrayConfig.libraryDescription = 'Root related extensions for RxShell'
