@@ -3,6 +3,7 @@ package eu.darken.rxshell.root;
 
 import android.support.annotation.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -103,20 +104,21 @@ public class Root {
                 if (builder == null) builder = new RxCmdShell.Builder();
                 builder = builder.root(true);
 
-                final Cmd cmd = Cmd.builder("id").timeout(timeout).build();
                 RxCmdShell.Session session = null;
                 Cmd.Result result;
                 try {
-                    session = builder.build().open().timeout(timeout, TimeUnit.MILLISECONDS).blockingGet();
-                    result = session.submit(cmd).blockingGet();
-                } catch (RuntimeException e) {
-                    if (e.getCause() instanceof TimeoutException) {
-                        Timber.tag(TAG).w("Root check timed out after %dms", timeout);
+                    try {
+                        session = builder.build().open().timeout(timeout, TimeUnit.MILLISECONDS).blockingGet();
+                    } catch (RuntimeException e) {
+                        if (e.getCause() instanceof TimeoutException) {
+                            Timber.tag(TAG).w("Waiting for su shell to open timed out after %dms", timeout);
+                        } else if (e.getCause() instanceof IOException) {
+                            Timber.tag(TAG).d("IOException when launching shell, likely no su binary!");
+                        }
                         emitter.onSuccess(new Root(State.UNAVAILABLE));
                         return;
-                    } else {
-                        throw e;
                     }
+                    result = Cmd.builder("id").timeout(timeout).execute(session);
                 } finally {
                     RxCmdShellHelper.blockingClose(session);
                 }
@@ -134,12 +136,9 @@ public class Root {
                             rootState = State.ROOTED;
                         }
                     }
-                } else if (result.getExitCode() == Cmd.ExitCode.EXCEPTION) {
-                    // There was likely no su binary at all
-                    Timber.tag(TAG).d("IOException when launching shell, no su binary?");
                 } else if (result.getExitCode() == Cmd.ExitCode.PROBLEM || result.getExitCode() == Cmd.ExitCode.SHELL_DIED || result.getExitCode() == Cmd.ExitCode.TIMEOUT) {
                     // Either we were denied root or there was an error with one of the commands, lets switch up
-                    Cmd.Result secondTry = Cmd.builder("echo test > /cache/root_test.tmp").timeout(20 * 1000).execute(builder.build());
+                    Cmd.Result secondTry = Cmd.builder("echo test > /cache/root_test.tmp").timeout(timeout).execute(builder.build());
                     rootState = secondTry.getExitCode() == Cmd.ExitCode.OK ? State.ROOTED : State.DENIED;
                     if (rootState == State.ROOTED) Timber.tag(TAG).d("We got ROOT on second try :o ?");
                 }

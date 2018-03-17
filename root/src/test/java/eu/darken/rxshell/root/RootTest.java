@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -44,23 +45,35 @@ public class RootTest extends BaseTest {
     }
 
     @Test
-    public void testUnrooted() {
-        when(suBinary.getType()).thenReturn(SuBinary.Type.NONE);
-        final Root.Builder builder = new Root.Builder();
+    public void testOpen_no_binary() {
+        when(shell.open()).thenReturn(Single.error(new IOException()));
 
-        when(shellSession.submit(any(Cmd.class))).thenAnswer(invocation -> {
-            Cmd cmd = invocation.getArgument(0);
-            if (cmd.getCommands().contains("id")) {
-                return Single.just(new Cmd.Result(cmd, Cmd.ExitCode.EXCEPTION));
-            } else return Single.error(new Exception("Unexpected state"));
-        });
-
-        final Root root = builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet();
-        assertThat(root.getState(), is(Root.State.UNAVAILABLE));
+        Root.Builder builder = new Root.Builder();
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.UNAVAILABLE));
     }
 
     @Test
-    public void testRooted() {
+    public void testOpen_timeout() {
+        when(shellSession.submit(any(Cmd.class))).thenAnswer(invocation -> {
+            Cmd cmd = invocation.getArgument(0);
+            if (cmd.getCommands().contains("id")) {
+                return Single.just(new Cmd.Result(cmd, Cmd.ExitCode.OK, Collections.singletonList("uid=0(root) gid=0(root) groups=0(root) context=u:r:supersu:s0"), new ArrayList<>()));
+            } else return Single.error(new Exception("Unexpected state"));
+        });
+        when(shell.open()).thenReturn(Single.just(shellSession).delay(2000, TimeUnit.MILLISECONDS));
+
+        Root.Builder builder = new Root.Builder();
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.ROOTED));
+
+        builder = new Root.Builder().timeout(1000);
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.UNAVAILABLE));
+
+        builder = new Root.Builder();
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.ROOTED));
+    }
+
+    @Test
+    public void testCommand_rooted() {
         when(shellSession.submit(any(Cmd.class))).thenAnswer(invocation -> {
             Cmd cmd = invocation.getArgument(0);
             if (cmd.getCommands().contains("id")) {
@@ -77,21 +90,17 @@ public class RootTest extends BaseTest {
     }
 
     @Test
-    public void testRooted_timeout() {
+    public void testCommand_timeout() {
+        when(shell.open()).thenReturn(Single.just(shellSession));
+
+        when(shellSession.submit(any(Cmd.class))).thenAnswer(invocation -> Single.just(new Cmd.Result(invocation.getArgument(0), Cmd.ExitCode.TIMEOUT, new ArrayList<>(), new ArrayList<>())));
+        Root.Builder builder = new Root.Builder().timeout(1000);
+        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.DENIED));
+
         when(shellSession.submit(any(Cmd.class))).thenAnswer(invocation -> {
             Cmd cmd = invocation.getArgument(0);
-            if (cmd.getCommands().contains("id")) {
-                return Single.just(new Cmd.Result(cmd, Cmd.ExitCode.OK, Collections.singletonList("uid=0(root) gid=0(root) groups=0(root) context=u:r:supersu:s0"), new ArrayList<>()));
-            } else return Single.error(new Exception("Unexpected state"));
+            return Single.just(new Cmd.Result(cmd, Cmd.ExitCode.OK, Collections.singletonList("uid=0(root) gid=0(root) groups=0(root) context=u:r:supersu:s0"), new ArrayList<>()));
         });
-        when(shell.open()).thenReturn(Single.just(shellSession).delay(2000, TimeUnit.MILLISECONDS));
-
-        Root.Builder builder = new Root.Builder();
-        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.ROOTED));
-
-        builder = new Root.Builder().timeout(1000);
-        assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.UNAVAILABLE));
-
         builder = new Root.Builder();
         assertThat(builder.shellBuilder(shellBuilder).suBinary(suBinary).build().blockingGet().getState(), is(Root.State.ROOTED));
     }

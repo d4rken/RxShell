@@ -119,7 +119,7 @@ public class SuApp {
                 String apkPath = null;
 
                 if (type == SuBinary.Type.UNKNOWN || type == SuBinary.Type.NONE) {
-                    Timber.tag(TAG).i("Unknown SuBinary, can't determine SuApp.");
+                    Timber.tag(TAG).d("Unknown or non existent su binary. Can't determine SuApp.");
                 } else {
                     String[] suAppPackages = SUAPPS.get(type);
                     PackageInfo pkgInfo = null;

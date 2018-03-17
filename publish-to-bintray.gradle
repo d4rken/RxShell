@@ -64,6 +64,7 @@ bintray {
 
         dryRun = false
         publish = true
+        override = false
 
         userOrg = user
         licenses = bintrayConfig.allLicenses
