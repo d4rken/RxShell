@@ -74,6 +74,10 @@ buildscript {
 }
 
 apply plugin: "com.github.kt3k.coveralls"
+apply plugin: 'jacoco'
+jacoco {
+    toolVersion = "0.7.9"
+}
 
 allprojects {
     repositories {
@@ -84,6 +88,43 @@ allprojects {
 
 subprojects { subProject ->
 
+    def exclude = ['eu/darken/R*.class', '**/BuildConfig.class', '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+    apply plugin: 'jacoco'
+    jacoco {
+        toolVersion = "0.7.9"
+    }
+    task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport']) {
+        reports {
+            xml.enabled = true
+            html.enabled = true
+        }
+
+        def debugTree = fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: exclude)
+        def mainSrc = "${project.projectDir}/src/main/java"
+
+        sourceDirectories = files([mainSrc])
+        classDirectories = files([debugTree])
+        executionData = fileTree(dir: "$project.buildDir", includes: [
+                "jacoco/testDebugUnitTest.exec",
+                "outputs/code-coverage/connected/*coverage.ec"
+        ])
+    }
+
+    task jacocoUnitTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
+        reports {
+            xml.enabled = true
+            html.enabled = true
+        }
+
+        def debugTree = fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: exclude)
+        def mainSrc = "${project.projectDir}/src/main/java"
+
+        sourceDirectories = files([mainSrc])
+        classDirectories = files([debugTree])
+        executionData = fileTree(dir: "$project.buildDir", includes: [
+                "jacoco/testDebugUnitTest.exec"
+        ])
+    }
 
     afterEvaluate {
         def isLibrary = subProject.plugins.hasPlugin('android-library')
@@ -98,25 +139,6 @@ subprojects { subProject ->
                 classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
             }
 
-            task jacocoReport(type: JacocoReport) {
-                group "Reporting"
-                description "Generate Jacoco coverage reports."
-
-                reports {
-                    xml.enabled = true
-                    html.enabled = true
-                }
-                classDirectories = fileTree(
-                        dir: './build/intermediates/classes/debug',
-                        excludes: ['eu/darken/R*.class',
-                                   '**/BuildConfig.class'
-                        ])
-                sourceDirectories = files([
-                        'src/main/java',
-                ])
-                executionData = fileTree(dir: "$project.buildDir", includes: ["jacoco/*.exec"])
-            }
-
             if (subProject.hasProperty('bintrayCredentials')) {
                 subProject.apply from: '../publish-to-bintray.gradle'
             }
@@ -124,6 +146,21 @@ subprojects { subProject ->
     }
 }
 
+def publishedProjects = subprojects.findAll()
+task jacocoRootReport(type: JacocoReport) {
+    dependsOn(publishedProjects.jacocoUnitTestReport)
+    sourceDirectories = files(publishedProjects.jacocoTestReport.sourceDirectories)
+    classDirectories = files(publishedProjects.jacocoTestReport.classDirectories)
+    executionData = files(publishedProjects.jacocoTestReport.executionData)
+    reports {
+        html.enabled = true
+        xml.enabled = true
+        csv.enabled = false
+    }
+    getReports().getHtml().setDestination(file("$buildDir/reports/jacocoRootReport/html"))
+    getReports().getXml().setDestination(file("$buildDir/reports/jacocoRootReport/merged.xml"))
+}
+
 coveralls {
-    jacocoReportPath "$rootProject/build/reports/jacoco/jacocoReport/jacocoReport.xml"
+    jacocoReportPath "$rootProject/build/reports/jacocoRootReport/merged.xml"
 }

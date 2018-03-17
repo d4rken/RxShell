@@ -22,4 +22,4 @@ before_install:
 
 script: ./gradlew clean assemble test
 
-after_success: ./gradlew :core:jacocoReport :root:jacocoReport coveralls
+after_success: ./gradlew jacocoRootReport coveralls
