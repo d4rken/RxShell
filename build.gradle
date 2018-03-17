@@ -73,11 +73,9 @@ buildscript {
     }
 }
 
+apply plugin: 'java'
 apply plugin: "com.github.kt3k.coveralls"
 apply plugin: 'jacoco'
-jacoco {
-    toolVersion = "0.7.9"
-}
 
 allprojects {
     repositories {
@@ -87,13 +85,9 @@ allprojects {
 }
 
 subprojects { subProject ->
-
-    def exclude = ['eu/darken/R*.class', '**/BuildConfig.class', '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+    def exclude = ['eu/darken/R*.class', '**/BuildConfig.class', '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*']
     apply plugin: 'jacoco'
-    jacoco {
-        toolVersion = "0.7.9"
-    }
-    task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport']) {
+    task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
         reports {
             xml.enabled = true
             html.enabled = true
@@ -107,22 +101,6 @@ subprojects { subProject ->
         executionData = fileTree(dir: "$project.buildDir", includes: [
                 "jacoco/testDebugUnitTest.exec",
                 "outputs/code-coverage/connected/*coverage.ec"
-        ])
-    }
-
-    task jacocoUnitTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
-        reports {
-            xml.enabled = true
-            html.enabled = true
-        }
-
-        def debugTree = fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: exclude)
-        def mainSrc = "${project.projectDir}/src/main/java"
-
-        sourceDirectories = files([mainSrc])
-        classDirectories = files([debugTree])
-        executionData = fileTree(dir: "$project.buildDir", includes: [
-                "jacoco/testDebugUnitTest.exec"
         ])
     }
 
@@ -145,10 +123,21 @@ subprojects { subProject ->
         }
     }
 }
+def publishedProjects = subprojects.findAll { it.path != ':example' }
 
-def publishedProjects = subprojects.findAll()
+task jacocoMerge(type: JacocoMerge) {
+    publishedProjects.each { subproject ->
+        executionData subproject.tasks.withType(Test)
+    }
+    doFirst {
+        executionData = files(executionData.findAll { it.exists() })
+    }
+}
+
 task jacocoRootReport(type: JacocoReport) {
-    dependsOn(publishedProjects.jacocoUnitTestReport)
+    dependsOn(publishedProjects.jacocoTestReport)
+
+    additionalSourceDirs = files(publishedProjects.sourceSets.main.allSource.srcDirs)
     sourceDirectories = files(publishedProjects.jacocoTestReport.sourceDirectories)
     classDirectories = files(publishedProjects.jacocoTestReport.classDirectories)
     executionData = files(publishedProjects.jacocoTestReport.executionData)
@@ -162,5 +151,6 @@ task jacocoRootReport(type: JacocoReport) {
 }
 
 coveralls {
+    sourceDirs = publishedProjects.sourceSets.main.allSource.srcDirs.flatten()
     jacocoReportPath "build/reports/jacocoRootReport/merged.xml"
 }
