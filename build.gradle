@@ -162,5 +162,5 @@ task jacocoRootReport(type: JacocoReport) {
 }
 
 coveralls {
-    jacocoReportPath "$rootProject/build/reports/jacocoRootReport/merged.xml"
+    jacocoReportPath "build/reports/jacocoRootReport/merged.xml"
 }
