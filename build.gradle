@@ -87,10 +87,7 @@ allprojects {
 subprojects { subProject ->
     def exclude = ['eu/darken/R*.class', '**/BuildConfig.class', '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*']
     apply plugin: 'jacoco'
-    task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
-        group = 'Coverage reports'
-        description = 'Generates a test coverage report for a project'
-
+    task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport']) {
         reports {
             xml.enabled = true
             html.enabled = true
@@ -105,8 +102,6 @@ subprojects { subProject ->
                 "jacoco/testDebugUnitTest.exec",
                 "outputs/code-coverage/connected/*coverage.ec"
         ])
-
-        rootProject.coveralls.sourceDirs.addAll(sourceSets.main.allSource.srcDirs.flatten())
     }
 
     afterEvaluate {
@@ -115,7 +110,6 @@ subprojects { subProject ->
         if (isLibrary) {
             subProject.apply plugin: "com.github.dcendents.android-maven"
             subProject.apply plugin: "com.jfrog.bintray"
-            subProject.apply plugin: "jacoco"
 
             task javadoc(type: Javadoc) {
                 source = android.sourceSets.main.java.srcDirs
@@ -130,29 +124,34 @@ subprojects { subProject ->
 }
 def publishedProjects = subprojects.findAll { it.path != ':example' }
 
-task jacocoMerge(type: JacocoMerge) {
-    publishedProjects.each { subproject ->
-        executionData subproject.tasks.withType(Test)
-    }
+task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
+    description = 'Generates an aggregate report from all subprojects'
+
+    dependsOn(publishedProjects.jacocoTestReport)
+
+    additionalSourceDirs = files(publishedProjects.sourceSets.main.allSource.srcDirs)
+    sourceDirectories = files(publishedProjects.jacocoTestReport.sourceDirectories)
+    classDirectories = files(publishedProjects.jacocoTestReport.classDirectories)
+    executionData = files(publishedProjects.jacocoTestReport.executionData)
+
     doFirst {
         executionData = files(executionData.findAll { it.exists() })
     }
-}
 
-task jacocoRootReport(type: JacocoReport) {
-    description = 'Generates an aggregate report from all subprojects'
-    dependsOn publishedProjects.jacocoTestReport, jacocoMerge
-
-    additionalSourceDirs = files(publishedProjects.sourceSets.main.allSource.srcDirs)
-    sourceDirectories = files(publishedProjects.sourceSets.main.allSource.srcDirs)
-    classDirectories = files(publishedProjects.sourceSets.main.output)
-    executionData jacocoMerge.destinationFile
     reports {
         html.enabled = true
         xml.enabled = true
     }
-}
 
+    doLast {
+        publishedProjects.forEach { publishedProject ->
+            copy {
+                from "$publishedProject.buildDir/reports/"
+                into "$buildDir/reports/$publishedProject.name/"
+            }
+        }
+    }
+}
 coveralls {
     jacocoReportPath = "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
 }
