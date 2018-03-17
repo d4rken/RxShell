@@ -105,6 +105,8 @@ subprojects { subProject ->
                 "jacoco/testDebugUnitTest.exec",
                 "outputs/code-coverage/connected/*coverage.ec"
         ])
+
+        rootProject.coveralls.sourceDirs.addAll(sourceSets.main.allSource.srcDirs.flatten())
     }
 
     afterEvaluate {
@@ -152,7 +154,6 @@ task jacocoRootReport(type: JacocoReport) {
 }
 
 coveralls {
-    sourceDirs = publishedProjects.sourceSets.main.allSource.srcDirs.flatten()
     jacocoReportPath = "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
 }
 
@@ -161,5 +162,4 @@ tasks.coveralls {
     description = 'Uploads the aggregated coverage report to Coveralls'
 
     dependsOn jacocoRootReport
-    onlyIf { System.env.'CI' && !JavaVersion.current().isJava9Compatible() }
 }
