@@ -88,7 +88,7 @@ allprojects {
 subprojects { subProject ->
     def exclude = ['eu/darken/R*.class', '**/BuildConfig.class', '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*']
     apply plugin: 'jacoco'
-    task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport']) {
+    task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
         reports {
             xml.enabled = true
             html.enabled = true
@@ -103,6 +103,9 @@ subprojects { subProject ->
                 "jacoco/testDebugUnitTest.exec",
                 "outputs/code-coverage/connected/*coverage.ec"
         ])
+
+        rootProject.coveralls.sourceDirs.addAll(sourceDirectories.flatten())
+        println "println2" + rootProject.coveralls.sourceDirs
     }
 
     afterEvaluate {
@@ -142,13 +145,12 @@ task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
 
 }
 coveralls {
-    sourceDirs = publishedProjects.sourceSets.main.allSource.srcDirs.flatten()
+    println "coveralls-sourcedir-final" + sourceDirs
     jacocoReportPath = "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
 }
 
 tasks.coveralls {
     group = 'Coverage reports'
     description = 'Uploads the aggregated coverage report to Coveralls'
-    println "println2" + publishedProjects.sourceSets.main.allSource
     dependsOn jacocoRootReport
 }
