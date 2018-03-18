@@ -21,10 +21,6 @@ android {
         textOutput 'stdout'
         disable 'TimberTagLength'
     }
-    buildTypes {
-        release {}
-        debug {}
-    }
 }
 afterEvaluate {
     javadoc.classpath += files(android.libraryVariants.collect { variant ->

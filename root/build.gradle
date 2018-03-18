@@ -21,10 +21,6 @@ android {
         textOutput 'stdout'
         disable 'TimberTagLength'
     }
-    buildTypes {
-        release {}
-        debug {}
-    }
 }
 
 dependencies {

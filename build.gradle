@@ -69,15 +69,16 @@ buildscript {
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
         //noinspection GradleDependency
-        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.5.0-x'
+        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.2'
     }
 }
 
-apply plugin: 'java'
+
 apply plugin: "com.github.kt3k.coveralls"
-apply plugin: 'jacoco'
+apply plugin: 'java'
 
 allprojects {
+    apply plugin: 'jacoco'
     repositories {
         google()
         jcenter()
@@ -86,22 +87,19 @@ allprojects {
 
 subprojects { subProject ->
     def exclude = ['eu/darken/R*.class', '**/BuildConfig.class', '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*']
-    apply plugin: 'jacoco'
     task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
         reports {
             xml.enabled = true
             html.enabled = true
         }
 
-        def debugTree = fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: exclude)
-        def mainSrc = "${project.projectDir}/src/main/java"
-
-        sourceDirectories = files([mainSrc])
-        classDirectories = files([debugTree])
+        sourceDirectories = files(["${project.projectDir}/src/main/java"])
+        classDirectories = files([fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: exclude)])
         executionData = fileTree(dir: "$project.buildDir", includes: [
-                "jacoco/testDebugUnitTest.exec",
-                "outputs/code-coverage/connected/*coverage.ec"
+                "jacoco/testDebugUnitTest.exec"
         ])
+
+        rootProject.coveralls.sourceDirs.addAll(sourceDirectories.flatten())
     }
 
     afterEvaluate {
@@ -110,7 +108,6 @@ subprojects { subProject ->
         if (isLibrary) {
             subProject.apply plugin: "com.github.dcendents.android-maven"
             subProject.apply plugin: "com.jfrog.bintray"
-            subProject.apply plugin: "jacoco"
 
             task javadoc(type: Javadoc) {
                 source = android.sourceSets.main.java.srcDirs
@@ -123,34 +120,30 @@ subprojects { subProject ->
         }
     }
 }
-def publishedProjects = subprojects.findAll { it.path != ':example' }
 
-task jacocoMerge(type: JacocoMerge) {
-    publishedProjects.each { subproject ->
-        executionData subproject.tasks.withType(Test)
-    }
-    doFirst {
-        executionData = files(executionData.findAll { it.exists() })
-    }
-}
+def publishedProjects = subprojects.findAll { !it.path.contains('example') }
+task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
+    description = 'Generates an aggregate report from all subprojects'
 
-task jacocoRootReport(type: JacocoReport) {
     dependsOn(publishedProjects.jacocoTestReport)
 
     additionalSourceDirs = files(publishedProjects.sourceSets.main.allSource.srcDirs)
     sourceDirectories = files(publishedProjects.jacocoTestReport.sourceDirectories)
     classDirectories = files(publishedProjects.jacocoTestReport.classDirectories)
     executionData = files(publishedProjects.jacocoTestReport.executionData)
+
     reports {
         html.enabled = true
         xml.enabled = true
-        csv.enabled = false
     }
-    getReports().getHtml().setDestination(file("$buildDir/reports/jacocoRootReport/html"))
-    getReports().getXml().setDestination(file("$buildDir/reports/jacocoRootReport/merged.xml"))
 }
 
 coveralls {
-    sourceDirs = publishedProjects.sourceSets.main.allSource.srcDirs.flatten()
-    jacocoReportPath "build/reports/jacocoRootReport/merged.xml"
+    jacocoReportPath = "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
+}
+
+tasks.coveralls {
+    group = 'Coverage reports'
+    description = 'Uploads the aggregated coverage report to Coveralls'
+    dependsOn jacocoRootReport
 }
