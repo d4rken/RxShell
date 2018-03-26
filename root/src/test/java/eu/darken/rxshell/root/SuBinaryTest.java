@@ -8,6 +8,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 import eu.darken.rxshell.cmd.Cmd;
@@ -68,6 +69,18 @@ public class SuBinaryTest extends BaseTest {
         assertThat(suBinary.getVersion(), is("16"));
         assertThat(suBinary.getExtra(), is("me.phh.superuser cm-su"));
         assertThat(suBinary.getRaw(), contains("16 me.phh.superuser cm-su"));
+    }
+
+    @Test
+    public void testUnknown_rawValue() {
+        when(session.submit(any(Cmd.class))).thenAnswer(invocation -> Single.just(new Cmd.Result(invocation.getArgument(0), Cmd.ExitCode.OK, Arrays.asList("123 unknown binary", "the cake is a lie"), new ArrayList<>())));
+        final SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
+        assertThat(suBinary.getType(), is(SuBinary.Type.UNKNOWN));
+        assertThat(suBinary.getVersion(), is(nullValue()));
+        assertThat(suBinary.getExtra(), is(nullValue()));
+        assertThat(suBinary.getRaw().get(0), is("123 unknown binary"));
+        assertThat(suBinary.getRaw().get(1), is("the cake is a lie"));
+        assertThat(suBinary.getRaw().size(), is(2));
     }
 
     @Test
