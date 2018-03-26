@@ -34,8 +34,7 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:ignore="HardcodedText"/>
 
-    <TextView
-        android:id="@+id/output"
+    <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginBottom="8dp"
@@ -45,7 +44,14 @@
         app:layout_constraintBottom_toTopOf="@+id/check_root"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/execute"/>
+        app:layout_constraintTop_toBottomOf="@+id/execute">
+
+        <TextView
+            android:id="@+id/output"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </ScrollView>
 
     <Button
         android:id="@+id/check_root"
