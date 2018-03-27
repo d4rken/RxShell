@@ -184,28 +184,31 @@ public class SuBinary {
                 Type type = Type.NONE;
                 String version = null;
                 String extra = null;
-                final List<String> rawResult = new ArrayList<>();
+                final List<String> rawResult = new ArrayList<>(result.getOutput());
 
-                if (result.getExitCode() == Cmd.ExitCode.OK) {
+                // Did we hear a faint response?
+                if (result.getOutput().size() > 0 || result.getExitCode() == Cmd.ExitCode.OK) {
                     type = Type.UNKNOWN;
-                    for (String line : result.merge()) {
-                        rawResult.add(line);
-
-                        for (Map.Entry<Pattern, Type> entry : PATTERNMAP.entrySet()) {
-                            Matcher matcher = entry.getKey().matcher(line);
-                            if (matcher.matches()) {
-                                type = entry.getValue();
-                                if (matcher.groupCount() == 1) version = matcher.group(1);
-                                else if (matcher.groupCount() == 2) {
-                                    version = matcher.group(1);
-                                    extra = matcher.group(2);
-                                }
-                                break;
-                            }
-                        }
-
-                    }
                 }
+
+                // Who's there?
+                for (String line : result.merge()) {
+                    for (Map.Entry<Pattern, Type> entry : PATTERNMAP.entrySet()) {
+                        Matcher matcher = entry.getKey().matcher(line);
+                        if (matcher.matches()) {
+                            type = entry.getValue();
+                            if (matcher.groupCount() == 1) {
+                                version = matcher.group(1);
+                            } else if (matcher.groupCount() == 2) {
+                                version = matcher.group(1);
+                                extra = matcher.group(2);
+                            }
+                            break;
+                        }
+                    }
+
+                }
+
                 emitter.onSuccess(new SuBinary(type, version, extra, rawResult));
             });
         }
