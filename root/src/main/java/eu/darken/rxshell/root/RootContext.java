@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Locale;
 
 import eu.darken.rxshell.cmd.RxCmdShell;
+import eu.darken.rxshell.extra.CmdHelper;
 import eu.darken.rxshell.extra.RxCmdShellHelper;
 import io.reactivex.Single;
 import timber.log.Timber;
@@ -133,7 +134,7 @@ public class RootContext {
 
                     ContextSwitch contextSwitch;
                     if (suBinary.getType() == SuBinary.Type.CHAINFIRE_SUPERSU) {
-                        contextSwitch = (context, command) -> "su --context " + context + " -c " + command + " < /dev/null";
+                        contextSwitch = (context, command) -> "su --context " + context + " -c " + CmdHelper.san(command) + " < /dev/null";
                     } else {
                         contextSwitch = (context, command) -> command;
                     }

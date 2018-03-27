@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.util.ArrayList;
 import java.util.Collections;
 
 import eu.darken.rxshell.cmd.RxCmdShell;
@@ -16,6 +17,7 @@ import io.reactivex.Single;
 import testhelper.BaseTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -88,5 +90,21 @@ public class RootContextTest extends BaseTest {
         verify(suAppBuilder).build(any());
         verify(suBinaryBuilder).build();
         verify(shellBuilder).build();
+    }
+
+    @Test
+    public void testContextSwitching_superSu() {
+        when(suBinaryBuilder.build()).thenReturn(Single.just(new SuBinary(SuBinary.Type.CHAINFIRE_SUPERSU, null, null, new ArrayList<>())));
+        RootContext.Builder builder = new RootContext.Builder(context);
+        builder.rootBuilder(rootBuilder);
+        builder.seLinuxBuilder(seLinuxBuilder);
+        builder.suAppBuilder(suAppBuilder);
+        builder.suBinaryBuilder(suBinaryBuilder);
+        builder.shellBuilder(shellBuilder);
+        final RootContext rootContext = builder.build().blockingGet();
+        final String switchCommand = rootContext.getContextSwitch().switchContext("acontext", "somecommand");
+        assertThat(switchCommand, containsString("'somecommand'"));
+        assertThat(switchCommand, containsString("--context acontext"));
+        assertThat(switchCommand, is("su --context acontext -c 'somecommand' < /dev/null"));
     }
 }
