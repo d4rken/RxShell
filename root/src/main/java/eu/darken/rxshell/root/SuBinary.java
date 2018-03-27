@@ -37,6 +37,7 @@ public class SuBinary {
         TENCENT_APPMANAGER,
         SE_SUPERUSER,
         MAGISKSU,
+        GENYMOTION,
         UNKNOWN,
         NONE
     }
@@ -146,6 +147,8 @@ public class SuBinary {
             PATTERNMAP.put(Pattern.compile("^([0-9]*)\\W(me\\.phh\\.superuser.+?)$"), Type.SE_SUPERUSER);
             // https://github.com/topjohnwu/MagiskSU/blob/master/su.h#L81
             PATTERNMAP.put(Pattern.compile("^(.+?):(?:MAGISKSU).*?$"), Type.MAGISKSU);
+
+            PATTERNMAP.put(Pattern.compile("^([0-9]*)\\W(com\\.genymotion\\.superuser)$"), Type.GENYMOTION);
         }
 
         private RxCmdShell.Session session;

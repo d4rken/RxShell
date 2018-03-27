@@ -102,6 +102,7 @@ public class SuApp {
             SUAPPS.put(SuBinary.Type.TENCENT_APPMANAGER, new String[]{"com.tencent.qrom.appmanager"});
             SUAPPS.put(SuBinary.Type.SE_SUPERUSER, new String[]{"me.phh.superuser"});
             SUAPPS.put(SuBinary.Type.MAGISKSU, new String[]{"com.topjohnwu.magisk"});
+            SUAPPS.put(SuBinary.Type.GENYMOTION, new String[]{"com.genymotion.superuser"});
         }
 
         private final PackageManager packageManager;

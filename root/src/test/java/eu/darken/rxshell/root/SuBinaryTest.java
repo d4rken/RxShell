@@ -279,4 +279,13 @@ public class SuBinaryTest extends BaseTest {
         assertThat(suBinary.getVersion(), is("16.1 (180311)"));
         assertThat(suBinary.getExtra(), is(nullValue()));
     }
+
+    @Test
+    public void testDetection_genymotion() {
+        fakeOutput("16 com.genymotion.superuser");
+        SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
+        assertThat(suBinary.getType(), is(SuBinary.Type.GENYMOTION));
+        assertThat(suBinary.getVersion(), is("16"));
+        assertThat(suBinary.getExtra(), is("com.genymotion.superuser"));
+    }
 }
