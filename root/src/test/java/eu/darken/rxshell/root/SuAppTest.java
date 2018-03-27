@@ -225,6 +225,13 @@ public class SuAppTest extends BaseTest {
     }
 
     @Test
+    public void testDetection_genymotion() {
+        fakePackage("com.genymotion.superuser");
+        when(suBinary.getType()).thenReturn(SuBinary.Type.GENYMOTION);
+        assertThat(new SuApp.Builder(packageManager).build(suBinary).blockingGet().getPackageName(), is("com.genymotion.superuser"));
+    }
+    
+    @Test
     public void testEqualsHash() {
         final SuApp app1 = new SuApp(SuBinary.Type.NONE, "pkg", "vname", 1, "/path");
         final SuApp app2 = new SuApp(SuBinary.Type.NONE, "pkg", "vname", 1, "/path");
