@@ -173,38 +173,33 @@ public class SuBinary {
             return this;
         }
 
+        private Cmd.Result trySession(Cmd.Builder cmdBuilder) {
+            if (session != null) return cmdBuilder.execute(session);
+            else return cmdBuilder.execute(RxCmdShell.builder().build());
+        }
+
         public Single<SuBinary> build() {
             return Single.create(emitter -> {
-                Cmd.Builder cmdBuilder = Cmd.builder("su --version");
-
-                Cmd.Result result;
-                if (session != null) result = cmdBuilder.execute(session);
-                else result = cmdBuilder.execute(RxCmdShell.builder().build());
-
-                if (result.getExitCode() != Cmd.ExitCode.OK && result.getExitCode() != Cmd.ExitCode.EXCEPTION) {
-                    result = Cmd
-                            .builder(
-                                    "su --V",
-                                    "su -version",
-                                    "su -v",
-                                    "su -V"
-                            )
-                            .timeout(5000)
-                            .execute(session);
-                }
-
                 Type type = Type.NONE;
+                String path = null;
                 String version = null;
                 String extra = null;
-                final List<String> rawResult = new ArrayList<>(result.getOutput());
+                final List<String> rawResult = new ArrayList<>();
+
+                Cmd.Result versionResult = trySession(Cmd.builder("su --version"));
+                if (versionResult.getExitCode() != Cmd.ExitCode.OK && versionResult.getExitCode() != Cmd.ExitCode.EXCEPTION) {
+                    versionResult = Cmd.builder("su --V", "su -version", "su -v", "su -V").timeout(5000).execute(session);
+                }
+
+                rawResult.addAll(versionResult.getOutput());
 
                 // Did we hear a faint response?
-                if (result.getOutput().size() > 0 || result.getExitCode() == Cmd.ExitCode.OK) {
+                if (versionResult.getOutput().size() > 0 || versionResult.getExitCode() == Cmd.ExitCode.OK) {
                     type = Type.UNKNOWN;
                 }
 
                 // Who's there?
-                for (String line : result.merge()) {
+                for (String line : versionResult.merge()) {
                     for (Map.Entry<Pattern, Type> entry : PATTERNMAP.entrySet()) {
                         Matcher matcher = entry.getKey().matcher(line);
                         if (matcher.matches()) {
@@ -220,17 +215,18 @@ public class SuBinary {
                     }
 
                 }
-                String path = null;
+
                 if (type != Type.NONE) {
-                    final Cmd.Result suPathResult = Cmd.builder("command -v su").execute(session);
-                    if (suPathResult.getExitCode() == Cmd.ExitCode.OK) {
-                        if (result.getOutput().size() == 1) {
-                            path = result.getOutput().get(0);
+                    Cmd.Result pathResult = trySession(Cmd.builder("command -v su"));
+                    if (pathResult.getExitCode() == Cmd.ExitCode.OK) {
+                        if (pathResult.getOutput().size() == 1) {
+                            path = pathResult.getOutput().get(0);
                         } else {
-                            Timber.tag(TAG).w("Unexpected su binary path: %s", result.getOutput());
+                            Timber.tag(TAG).w("Unexpected su binary path: %s", pathResult.getOutput());
                         }
                     }
                 }
+
                 emitter.onSuccess(new SuBinary(type, path, version, extra, rawResult));
             });
         }

@@ -69,6 +69,11 @@ public class SELinux {
             return this;
         }
 
+        private Cmd.Result trySession(Cmd.Builder cmdBuilder) {
+            if (session != null) return cmdBuilder.execute(session);
+            else return cmdBuilder.execute(RxCmdShell.builder().build());
+        }
+
         public Single<SELinux> build() {
             return Single.create(emitter -> {
                 State state = null;
@@ -93,11 +98,7 @@ public class SELinux {
                     }
 
                     if (state == null) {
-                        final Cmd.Builder cmdBuilder = Cmd.builder("getenforce").timeout(5000);
-
-                        Cmd.Result result;
-                        if (session != null) result = cmdBuilder.execute(session);
-                        else result = cmdBuilder.execute(RxCmdShell.builder().build());
+                        Cmd.Result result = trySession(Cmd.builder("getenforce").timeout(5000));
 
                         if (result.getExitCode() == Cmd.ExitCode.OK) {
                             //noinspection ConstantConditions

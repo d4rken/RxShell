@@ -52,20 +52,18 @@ public class SuBinaryTest extends BaseTest {
     }
 
     @Test
-    public void testParse_version() {
-        when(session.submit(any(Cmd.class))).thenAnswer(invocation -> Single.just(new Cmd.Result(invocation.getArgument(0), Cmd.ExitCode.OK, Collections.singletonList("360.cn es 1.6.0.6"), new ArrayList<>())));
-        final SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
-        assertThat(suBinary.getType(), is(SuBinary.Type.QIHOO_360));
-        assertThat(suBinary.getVersion(), is("1.6.0.6"));
-        assertThat(suBinary.getExtra(), is(nullValue()));
-        assertThat(suBinary.getRaw(), contains("360.cn es 1.6.0.6"));
-    }
-
-    @Test
-    public void testParse_version_extra() {
-        when(session.submit(any(Cmd.class))).thenAnswer(invocation -> Single.just(new Cmd.Result(invocation.getArgument(0), Cmd.ExitCode.OK, Collections.singletonList("16 me.phh.superuser cm-su"), new ArrayList<>())));
+    public void testParse() {
+        when(session.submit(any(Cmd.class))).thenAnswer(invocation -> {
+            Cmd cmd = invocation.getArgument(0);
+            if (cmd.getCommands().get(0).contains("command -v")) {
+                return Single.just(new Cmd.Result(invocation.getArgument(0), Cmd.ExitCode.OK, Collections.singletonList("/some/path"), new ArrayList<>()));
+            } else {
+                return Single.just(new Cmd.Result(invocation.getArgument(0), Cmd.ExitCode.OK, Collections.singletonList("16 me.phh.superuser cm-su"), new ArrayList<>()));
+            }
+        });
         final SuBinary suBinary = new SuBinary.Builder().session(session).build().blockingGet();
         assertThat(suBinary.getType(), is(SuBinary.Type.SE_SUPERUSER));
+        assertThat(suBinary.getPath(), is("/some/path"));
         assertThat(suBinary.getVersion(), is("16"));
         assertThat(suBinary.getExtra(), is("me.phh.superuser cm-su"));
         assertThat(suBinary.getRaw(), contains("16 me.phh.superuser cm-su"));
