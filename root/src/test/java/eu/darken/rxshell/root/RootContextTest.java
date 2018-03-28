@@ -55,7 +55,7 @@ public class RootContextTest extends BaseTest {
         when(seLinuxBuilder.build()).thenReturn(Single.just(new SELinux(SELinux.State.ENFORCING)));
 
         when(suBinaryBuilder.session(any())).thenReturn(suBinaryBuilder);
-        when(suBinaryBuilder.build()).thenReturn(Single.just(new SuBinary(SuBinary.Type.NONE, null, null, Collections.emptyList())));
+        when(suBinaryBuilder.build()).thenReturn(Single.just(new SuBinary(SuBinary.Type.NONE, null, null, null, Collections.emptyList())));
 
         when(suAppBuilder.build(any())).thenReturn(Single.just(new SuApp(SuBinary.Type.NONE, null, null, null, null)));
     }
@@ -94,7 +94,7 @@ public class RootContextTest extends BaseTest {
 
     @Test
     public void testContextSwitching_superSu() {
-        when(suBinaryBuilder.build()).thenReturn(Single.just(new SuBinary(SuBinary.Type.CHAINFIRE_SUPERSU, null, null, new ArrayList<>())));
+        when(suBinaryBuilder.build()).thenReturn(Single.just(new SuBinary(SuBinary.Type.CHAINFIRE_SUPERSU, null, null, null, new ArrayList<>())));
         RootContext.Builder builder = new RootContext.Builder(context);
         builder.rootBuilder(rootBuilder);
         builder.seLinuxBuilder(seLinuxBuilder);

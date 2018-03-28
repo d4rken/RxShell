@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import eu.darken.rxshell.cmd.Cmd;
 import eu.darken.rxshell.cmd.RxCmdShell;
 import io.reactivex.Single;
+import timber.log.Timber;
 
 
 public class SuBinary {
@@ -43,12 +44,14 @@ public class SuBinary {
     }
 
     private final Type type;
+    private final String path;
     private final String extra;
     private final String version;
     private final List<String> raw;
 
-    public SuBinary(Type type, @Nullable String version, @Nullable String extra, List<String> raw) {
+    public SuBinary(Type type, @Nullable String path, @Nullable String version, @Nullable String extra, List<String> raw) {
         this.type = type;
+        this.path = path;
         this.version = version;
         this.extra = extra;
         this.raw = raw;
@@ -60,6 +63,10 @@ public class SuBinary {
     }
 
     @Nullable
+    public String getPath() {
+        return path;
+    }
+
     public String getExtra() {
         return extra;
     }
@@ -75,7 +82,7 @@ public class SuBinary {
 
     @Override
     public String toString() {
-        return String.format(Locale.US, "SuBinary(type=%s, version=%s, extra=%s, raw=%s)", type, version, extra, raw);
+        return String.format(Locale.US, "SuBinary(type=%s, path=%s, version=%s, extra=%s, raw=%s)", type, path, version, extra, raw);
     }
 
     @Override
@@ -86,6 +93,7 @@ public class SuBinary {
         SuBinary suBinary = (SuBinary) o;
 
         if (type != suBinary.type) return false;
+        if (path != null ? !path.equals(suBinary.path) : suBinary.path != null) return false;
         if (extra != null ? !extra.equals(suBinary.extra) : suBinary.extra != null) return false;
         if (version != null ? !version.equals(suBinary.version) : suBinary.version != null) return false;
         return raw != null ? raw.equals(suBinary.raw) : suBinary.raw == null;
@@ -94,6 +102,7 @@ public class SuBinary {
     @Override
     public int hashCode() {
         int result = type.hashCode();
+        result = 31 * result + (path != null ? path.hashCode() : 0);
         result = 31 * result + (extra != null ? extra.hashCode() : 0);
         result = 31 * result + (version != null ? version.hashCode() : 0);
         result = 31 * result + (raw != null ? raw.hashCode() : 0);
@@ -102,7 +111,7 @@ public class SuBinary {
 
     public static class Builder {
         static final String TAG = "RXS:Root:SuBinary";
-        private static final Map<Pattern, Type> PATTERNMAP;
+        public static final Map<Pattern, Type> PATTERNMAP;
 
         static {
             PATTERNMAP = new HashMap<>();
@@ -211,8 +220,18 @@ public class SuBinary {
                     }
 
                 }
-
-                emitter.onSuccess(new SuBinary(type, version, extra, rawResult));
+                String path = null;
+                if (type != Type.NONE) {
+                    final Cmd.Result suPathResult = Cmd.builder("command -v su").execute(session);
+                    if (suPathResult.getExitCode() == Cmd.ExitCode.OK) {
+                        if (result.getOutput().size() == 1) {
+                            path = result.getOutput().get(0);
+                        } else {
+                            Timber.tag(TAG).w("Unexpected su binary path: %s", result.getOutput());
+                        }
+                    }
+                }
+                emitter.onSuccess(new SuBinary(type, path, version, extra, rawResult));
             });
         }
     }

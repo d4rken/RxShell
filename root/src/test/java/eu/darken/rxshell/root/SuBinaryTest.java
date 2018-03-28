@@ -85,9 +85,9 @@ public class SuBinaryTest extends BaseTest {
 
     @Test
     public void testEqualsHash() {
-        SuBinary binary1 = new SuBinary(SuBinary.Type.SE_SUPERUSER, "16", "me.phh.superuser cm-su", new ArrayList<>());
-        SuBinary binary2 = new SuBinary(SuBinary.Type.SE_SUPERUSER, "16", "me.phh.superuser cm-su", new ArrayList<>());
-        SuBinary binary3 = new SuBinary(SuBinary.Type.UNKNOWN, null, null, null);
+        SuBinary binary1 = new SuBinary(SuBinary.Type.SE_SUPERUSER, "/su/bin/su", "16", "me.phh.superuser cm-su", new ArrayList<>());
+        SuBinary binary2 = new SuBinary(SuBinary.Type.SE_SUPERUSER, "/su/bin/su", "16", "me.phh.superuser cm-su", new ArrayList<>());
+        SuBinary binary3 = new SuBinary(SuBinary.Type.UNKNOWN, null, null, null, null);
 
         assertThat(binary1, is(binary2));
         assertThat(binary2, is(not(binary3)));
