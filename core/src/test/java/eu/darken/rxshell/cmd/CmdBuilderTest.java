@@ -11,12 +11,15 @@ import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Single;
 import io.reactivex.processors.PublishProcessor;
+import io.reactivex.subscribers.TestSubscriber;
 import testtools.BaseTest;
 
 import static junit.framework.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -160,5 +163,32 @@ public class CmdBuilderTest extends BaseTest {
         final Cmd.Result result = Cmd.builder("").execute(shell);
         assertThat(result.getExitCode(), is(Cmd.ExitCode.EXCEPTION));
         assertThat(result.getErrors(), contains(ex.toString()));
+        assertThat(result.getOutput(), is(not(nullValue())));
+    }
+
+    @Test
+    public void testExecute_oneshot_exception_no_buffers() throws IOException {
+        RxCmdShell shell = mock(RxCmdShell.class);
+        Exception ex = new IOException("Error message");
+        when(shell.open()).thenReturn(Single.error(ex));
+        when(shell.isAlive()).thenReturn(Single.just(false));
+
+        final PublishProcessor<String> errorPub = PublishProcessor.create();
+        final TestSubscriber<String> errorSub = errorPub.test();
+        final PublishProcessor<String> outputPub = PublishProcessor.create();
+        final TestSubscriber<String> outputSub = outputPub.test();
+        final Cmd.Result result = Cmd.builder("")
+                .outputBuffer(false)
+                .errorBuffer(false)
+                .outputProcessor(outputPub)
+                .errorProcessor(errorPub)
+                .execute(shell);
+        assertThat(result.getExitCode(), is(Cmd.ExitCode.EXCEPTION));
+        assertThat(result.getErrors(), is(nullValue()));
+        assertThat(result.getOutput(), is(nullValue()));
+        assertThat(errorSub.valueCount(), is(1));
+        assertThat(outputSub.valueCount(), is(0));
+        errorSub.assertComplete();
+        outputSub.assertComplete();
     }
 }

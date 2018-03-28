@@ -305,7 +305,21 @@ public class Cmd {
          */
         public Result execute(RxCmdShell shell) {
             return submit(shell)
-                    .onErrorReturn(err -> new Result(build(), ExitCode.EXCEPTION, null, Collections.singletonList(err.toString())))
+                    .onErrorReturn(err -> {
+                        final Cmd cmd = Builder.this.build();
+
+                        List<String> oBuffer = cmd.useOutputBuffer ? new ArrayList<>() : null;
+                        List<String> eBuffer = cmd.useErrorBuffer ? Collections.singletonList(err.toString()) : null;
+
+                        if (cmd.outputProcessor != null) {
+                            cmd.outputProcessor.onComplete();
+                        }
+                        if (cmd.errorProcessor != null) {
+                            cmd.errorProcessor.onNext(err.toString());
+                            cmd.errorProcessor.onComplete();
+                        }
+                        return new Result(cmd, ExitCode.EXCEPTION, oBuffer, eBuffer);
+                    })
                     .blockingGet();
         }
     }
