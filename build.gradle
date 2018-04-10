@@ -11,7 +11,7 @@ buildscript {
             'compileSdk'         : 27,
             'sourceCompatibility': JavaVersion.VERSION_1_8,
             'targetCompatibility': JavaVersion.VERSION_1_8,
-            'supportLibrary'     : '27.0.2',
+            'supportLibrary'     : '27.1.1',
             'buildTools'         : '27.0.1'
     ]
 
