@@ -18,6 +18,7 @@ import testhelper.BaseTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -106,5 +107,23 @@ public class RootContextTest extends BaseTest {
         assertThat(switchCommand, containsString("'somecommand'"));
         assertThat(switchCommand, containsString("--context acontext"));
         assertThat(switchCommand, is("su --context acontext -c 'somecommand' < /dev/null"));
+    }
+
+    @Test
+    public void testEmpty() {
+        final RootContext empty = RootContext.EMPTY;
+        assertThat(empty.isRooted(), is(false));
+        assertThat(empty.getRoot(), is(notNullValue()));
+
+        assertThat(empty.getContextSwitch(), is(notNullValue()));
+
+        assertThat(empty.getSELinux(), is(notNullValue()));
+        assertThat(empty.getSELinux().getState(), is(SELinux.State.ENFORCING));
+
+        assertThat(empty.getSuBinary(), is(notNullValue()));
+        assertThat(empty.getSuBinary().getType(), is(SuBinary.Type.NONE));
+
+        assertThat(empty.getSuApp(), is(notNullValue()));
+        assertThat(empty.getSuApp().getType(), is(SuBinary.Type.NONE));
     }
 }

@@ -18,7 +18,7 @@ public class RootContext {
     public static final RootContext EMPTY = new RootContext(
             new Root(Root.State.UNAVAILABLE),
             new SuBinary(SuBinary.Type.NONE, null, null, null, null),
-            null,
+            new SuApp(SuBinary.Type.NONE, null, null, null, null),
             new SELinux(SELinux.State.ENFORCING),
             (context, command) -> command
     );
