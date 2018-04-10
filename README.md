@@ -8,8 +8,8 @@ A library that helps your app interact with shells on Android.
 ## Quickstart
 Include the library in your modules `build.gradle` file:
 ```groovy
-implementation 'eu.darken.rxshell:core:1.0.4'
-implementation 'eu.darken.rxshell:root:1.0.4' // For root related extensions
+implementation 'eu.darken.rxshell:core:<insert-latest-release>'
+implementation 'eu.darken.rxshell:root:<insert-latest-release>' // For root related extensions
 
 ```
 
