@@ -1,7 +1,5 @@
 package eu.darken.rxshell.cmd;
 
-import android.support.v4.util.Pair;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -9,6 +7,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Collections;
 
 import eu.darken.rxshell.extra.HasEnvironmentVariables;
+import eu.darken.rxshell.extra.Pair;
 import testtools.BaseTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;

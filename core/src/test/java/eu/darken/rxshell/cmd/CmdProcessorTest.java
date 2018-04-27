@@ -1,8 +1,5 @@
 package eu.darken.rxshell.cmd;
 
-
-import android.support.v4.util.Pair;
-
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import eu.darken.rxshell.extra.Pair;
 import eu.darken.rxshell.process.RxProcess;
 import eu.darken.rxshell.shell.RxShell;
 import io.reactivex.observers.TestObserver;
@@ -107,7 +105,7 @@ public class CmdProcessorTest extends BaseTest {
     }
 
     @Test
-    public void testCommand_empty() throws IOException {
+    public void testCommand_empty() {
         processor.attach(session);
         Cmd cmd = Cmd.builder("").build();
         final Cmd.Result result = processor.submit(cmd).test().awaitDone(2, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
@@ -118,7 +116,7 @@ public class CmdProcessorTest extends BaseTest {
     }
 
     @Test
-    public void testCommand_multiple() throws IOException, InterruptedException {
+    public void testCommand_multiple() {
         processor.attach(session);
 
         int cnt = 100;
@@ -141,7 +139,7 @@ public class CmdProcessorTest extends BaseTest {
     }
 
     @Test
-    public void testCommand_callback_sync() throws IOException, InterruptedException {
+    public void testCommand_callback_sync() {
         processor.attach(session);
 
         int cnt = 100;
@@ -164,7 +162,7 @@ public class CmdProcessorTest extends BaseTest {
     }
 
     @Test
-    public void testCommand_callback_async() throws IOException, InterruptedException {
+    public void testCommand_callback_async() {
         processor.attach(session);
 
         int cnt = 100;
@@ -224,7 +222,7 @@ public class CmdProcessorTest extends BaseTest {
     }
 
     @Test
-    public void testCommand_disabledBuffers() throws IOException, InterruptedException {
+    public void testCommand_disabledBuffers() {
         processor.attach(session);
 
         Cmd.Result result = processor
@@ -239,7 +237,7 @@ public class CmdProcessorTest extends BaseTest {
     }
 
     @Test
-    public void testWatchdog() throws IOException {
+    public void testWatchdog() {
         processor.attach(session);
 
         final Cmd.Result result = processor
@@ -252,7 +250,7 @@ public class CmdProcessorTest extends BaseTest {
     }
 
     @Test
-    public void testHarvestersUpstreamError_both() throws IOException {
+    public void testHarvestersUpstreamError_both() {
         processor.attach(session);
 
         new Thread(() -> {
@@ -270,7 +268,7 @@ public class CmdProcessorTest extends BaseTest {
     }
 
     @Test
-    public void testHarvestersUpstreamError_outpout() throws IOException {
+    public void testHarvestersUpstreamError_outpout() {
         processor.attach(session);
 
         new Thread(() -> {
@@ -285,7 +283,7 @@ public class CmdProcessorTest extends BaseTest {
     }
 
     @Test
-    public void testHarvestersUpstreamError_error() throws IOException {
+    public void testHarvestersUpstreamError_error() {
         processor.attach(session);
 
         new Thread(() -> {
@@ -300,7 +298,7 @@ public class CmdProcessorTest extends BaseTest {
     }
 
     @Test
-    public void testHarvestersPrematureCompletion() throws IOException {
+    public void testHarvestersPrematureCompletion() {
         processor.attach(session);
 
         new Thread(() -> {
