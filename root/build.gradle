@@ -26,11 +26,10 @@ android {
 dependencies {
     implementation project(':core')
 
-    api deps.support.annotations
+    implementation deps.support.annotations
+    implementation deps.timber
 
-    api deps.timber
-
-    implementation deps.rxJava
+    api deps.rxJava
 
     testImplementation deps.jUnit
     testImplementation deps.mockito

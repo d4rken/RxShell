@@ -28,13 +28,11 @@ afterEvaluate {
     })
 }
 dependencies {
-    api deps.support.annotations
-    api deps.support.appcompat
+    implementation deps.support.annotations
 
-    api deps.timber
+    implementation deps.timber
 
-    implementation deps.rxJava
-    implementation deps.rxJava
+    api deps.rxJava
     api deps.rxJavaReplay
 
     testImplementation deps.jUnit

@@ -1,5 +1,8 @@
 apply plugin: 'com.github.dcendents.android-maven'
+
 group = bintrayConfig.publishedGroupId
+version = bintrayConfig.libraryVersion
+
 install {
     repositories.mavenInstaller {
         pom.project {
@@ -50,7 +53,6 @@ artifacts {
     archives javadocJar
     archives sourcesJar
 }
-version = bintrayConfig.libraryVersion
 
 // https://github.com/bintray/gradle-bintray-plugin#buildgradle
 bintray {

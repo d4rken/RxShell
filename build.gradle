@@ -1,7 +1,7 @@
 buildscript {
     def versionMajor = 1
     def versionMinor = 0
-    def versionPatch = 5
+    def versionPatch = 6
 
     ext.versions = [
             'versionCode'        : versionMajor * 10000 + versionMinor * 100 + versionPatch,
@@ -12,7 +12,7 @@ buildscript {
             'sourceCompatibility': JavaVersion.VERSION_1_8,
             'targetCompatibility': JavaVersion.VERSION_1_8,
             'supportLibrary'     : '27.1.1',
-            'buildTools'         : '27.0.1'
+            'buildTools'         : '27.0.3'
     ]
 
     def credentialsFile = new File(System.properties['user.home'], ".bintray/bintray.properties")
@@ -50,9 +50,9 @@ buildscript {
                     'annotations': "com.android.support:support-annotations:${versions.supportLibrary}",
                     'appcompat'  : "com.android.support:appcompat-v7:${versions.supportLibrary}"
             ],
-            androidPlugin: 'com.android.tools.build:gradle:3.0.1',
-            timber       : "com.jakewharton.timber:timber:4.6.1",
-            rxJava       : "io.reactivex.rxjava2:rxjava:2.1.6",
+            androidPlugin: 'com.android.tools.build:gradle:3.1.2',
+            timber       : "com.jakewharton.timber:timber:4.7.0",
+            rxJava       : "io.reactivex.rxjava2:rxjava:2.1.12",
             rxJavaReplay : "com.jakewharton.rx2:replaying-share:2.0.1",
             jUnit        : "junit:junit:4.12",
             mockito      : "org.mockito:mockito-core:2.8.9",
@@ -65,8 +65,8 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.1'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
+        classpath 'com.android.tools.build:gradle:3.1.2'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
         //noinspection GradleDependency
         classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.2'

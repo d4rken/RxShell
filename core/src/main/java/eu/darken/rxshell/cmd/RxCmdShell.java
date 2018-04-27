@@ -1,7 +1,5 @@
 package eu.darken.rxshell.cmd;
 
-import android.support.v4.util.Pair;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import eu.darken.rxshell.extra.HasEnvironmentVariables;
+import eu.darken.rxshell.extra.Pair;
 import eu.darken.rxshell.extra.RXSDebug;
 import eu.darken.rxshell.process.DefaultProcessFactory;
 import eu.darken.rxshell.process.ProcessFactory;
