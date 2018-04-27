@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import eu.darken.rxshell.extra.Pair;
+import eu.darken.rxshell.extra.EnvVar;
 import eu.darken.rxshell.process.RxProcess;
 import eu.darken.rxshell.shell.RxShell;
 import io.reactivex.observers.TestObserver;
@@ -143,7 +143,7 @@ public class CmdProcessorTest extends BaseTest {
         processor.attach(session);
 
         int cnt = 100;
-        List<Pair<TestObserver<Cmd.Result>, TestSubscriber<String>>> testSubscribers = new ArrayList<>();
+        List<EnvVar<TestObserver<Cmd.Result>, TestSubscriber<String>>> testSubscribers = new ArrayList<>();
         for (int j = 0; j < cnt; j++) {
             List<String> cmds = new ArrayList<>();
             for (int i = 0; i < 10; i++) cmds.add("echo " + i);
@@ -153,11 +153,11 @@ public class CmdProcessorTest extends BaseTest {
             TestSubscriber<String> outputObserver = outputListener.doOnEach(stringNotification -> TestHelper.sleep(1)).test();
             final Cmd cmd = Cmd.builder(cmds).outputProcessor(outputListener).build();
             final TestObserver<Cmd.Result> resultObserver = processor.submit(cmd).subscribeOn(Schedulers.newThread()).test();
-            testSubscribers.add(new Pair<>(resultObserver, outputObserver));
+            testSubscribers.add(new EnvVar<>(resultObserver, outputObserver));
         }
-        for (Pair<TestObserver<Cmd.Result>, TestSubscriber<String>> pair : testSubscribers) {
-            pair.first.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
-            pair.second.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(11);
+        for (EnvVar<TestObserver<Cmd.Result>, TestSubscriber<String>> envVar : testSubscribers) {
+            envVar.first.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
+            envVar.second.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(11);
         }
     }
 
@@ -166,7 +166,7 @@ public class CmdProcessorTest extends BaseTest {
         processor.attach(session);
 
         int cnt = 100;
-        List<Pair<TestObserver<Cmd.Result>, TestSubscriber<String>>> testSubscribers = new ArrayList<>();
+        List<EnvVar<TestObserver<Cmd.Result>, TestSubscriber<String>>> testSubscribers = new ArrayList<>();
         for (int j = 0; j < cnt; j++) {
             List<String> cmds = new ArrayList<>();
             for (int i = 0; i < 10; i++) cmds.add("echo " + i);
@@ -176,11 +176,11 @@ public class CmdProcessorTest extends BaseTest {
             TestSubscriber<String> outputObserver = outputListener.observeOn(Schedulers.newThread()).doOnEach(stringNotification -> TestHelper.sleep(1)).test();
             final Cmd cmd = Cmd.builder(cmds).outputProcessor(outputListener).build();
             final TestObserver<Cmd.Result> resultObserver = processor.submit(cmd).subscribeOn(Schedulers.newThread()).test();
-            testSubscribers.add(new Pair<>(resultObserver, outputObserver));
+            testSubscribers.add(new EnvVar<>(resultObserver, outputObserver));
         }
-        for (Pair<TestObserver<Cmd.Result>, TestSubscriber<String>> pair : testSubscribers) {
-            pair.first.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
-            pair.second.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(11);
+        for (EnvVar<TestObserver<Cmd.Result>, TestSubscriber<String>> envVar : testSubscribers) {
+            envVar.first.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
+            envVar.second.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(11);
         }
     }
 

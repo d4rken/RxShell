@@ -8,8 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import eu.darken.rxshell.extra.EnvVar;
 import eu.darken.rxshell.extra.HasEnvironmentVariables;
-import eu.darken.rxshell.extra.Pair;
 import eu.darken.rxshell.extra.RXSDebug;
 import eu.darken.rxshell.process.DefaultProcessFactory;
 import eu.darken.rxshell.process.ProcessFactory;
@@ -238,9 +238,9 @@ public class RxCmdShell {
         /**
          * @see #shellEnvironment(String, String)
          */
-        public Builder shellEnvironment(Collection<Pair<String, String>> vars) {
-            for (Pair<String, String> pair : vars) {
-                shellEnvironment(pair.first, pair.second);
+        public Builder shellEnvironment(Collection<EnvVar<String, String>> vars) {
+            for (EnvVar<String, String> envVar : vars) {
+                shellEnvironment(envVar.first, envVar.second);
             }
             return this;
         }

@@ -6,8 +6,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 
+import eu.darken.rxshell.extra.EnvVar;
 import eu.darken.rxshell.extra.HasEnvironmentVariables;
-import eu.darken.rxshell.extra.Pair;
 import testtools.BaseTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,10 +31,10 @@ public class RxCmdShellBuilderTest extends BaseTest {
         RxCmdShell.Builder shellBuilder = RxCmdShell.builder();
         assertThat(shellBuilder.getEnvironment().isEmpty(), is(true));
 
-        final Pair<String, String> testPair = new Pair<>("1", "2");
+        final EnvVar<String, String> testEnvVar = new EnvVar<>("1", "2");
         shellBuilder.shellEnvironment(root -> {
             assertThat(root, is(false));
-            return Collections.singletonList(testPair);
+            return Collections.singletonList(testEnvVar);
         });
         shellBuilder.build();
         assertThat(shellBuilder.getEnvironment().size(), is(1));

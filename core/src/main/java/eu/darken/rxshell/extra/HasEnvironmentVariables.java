@@ -4,5 +4,5 @@ import java.util.Collection;
 
 public interface HasEnvironmentVariables {
 
-    Collection<Pair<String, String>> getEnvironmentVariables(boolean root);
+    Collection<EnvVar<String, String>> getEnvironmentVariables(boolean root);
 }
