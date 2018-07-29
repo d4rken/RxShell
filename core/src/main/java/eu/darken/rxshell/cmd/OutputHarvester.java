@@ -8,7 +8,6 @@ import org.reactivestreams.Subscriber;
 import java.util.ArrayList;
 import java.util.List;
 
-import eu.darken.rxshell.extra.RXSDebug;
 import io.reactivex.Flowable;
 import timber.log.Timber;
 
@@ -62,7 +61,6 @@ public class OutputHarvester extends Harvester<OutputHarvester.Crop> {
             }
 
             if (contentPart != null) {
-                if (RXSDebug.isDebug()) Timber.tag(TAG).d(line);
                 publishParsed(contentPart);
             }
 

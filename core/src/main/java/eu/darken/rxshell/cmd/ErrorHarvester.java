@@ -8,9 +8,7 @@ import org.reactivestreams.Subscriber;
 import java.util.ArrayList;
 import java.util.List;
 
-import eu.darken.rxshell.extra.RXSDebug;
 import io.reactivex.Flowable;
-import timber.log.Timber;
 
 
 public class ErrorHarvester extends Harvester<Harvester.Crop> {
@@ -47,7 +45,6 @@ public class ErrorHarvester extends Harvester<Harvester.Crop> {
             else if (markerIndex > 0) contentPart = line.substring(0, markerIndex - 1);
 
             if (contentPart != null) {
-                if (RXSDebug.isDebug()) Timber.tag(TAG).d(contentPart);
                 publishParsed(contentPart);
             }
 
