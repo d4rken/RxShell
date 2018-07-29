@@ -68,3 +68,4 @@ While this is obviously :^) the best library, there are alternatives you could b
 
 * [@Chainfire's](https://twitter.com/ChainfireXDA) [libsuperuser](https://github.com/Chainfire/libsuperuser)
 * [@SpazeDog's](https://github.com/SpazeDog) [rootfw](https://github.com/SpazeDog/rootfw)
+* [@topjohnwu's](https://twitter.com/topjohnwu) [libsu](https://github.com/topjohnwu/libsu)
