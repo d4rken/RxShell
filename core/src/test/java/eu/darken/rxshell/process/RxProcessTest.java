@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import eu.darken.rxshell.extra.ApiWrap;
+import eu.darken.rxshell.extra.RXSDebug;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.schedulers.Schedulers;
 import testtools.BaseTest;
@@ -22,6 +23,7 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -88,7 +90,7 @@ public class RxProcessTest extends BaseTest {
     }
 
     @Test
-    public void testExitCode() throws InterruptedException {
+    public void testExitCode() {
         RxProcess rxProcess = new RxProcess(processFactory, processKiller, "sh");
         RxProcess.Session session = rxProcess.open().test().awaitCount(1).assertNoTimeout().values().get(0);
         session.waitFor().test().awaitDone(1, TimeUnit.SECONDS).assertTimeout();
@@ -215,6 +217,22 @@ public class RxProcessTest extends BaseTest {
             rxProcess.close().observeOn(Schedulers.newThread()).test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
         }
         verify(mockProcesses.get(0)).destroy();
+    }
+
+    @Test
+    public void testProcessCallbacks() {
+        RXSDebug.ProcessCallback callback = mock(RXSDebug.ProcessCallback.class);
+        RXSDebug.addCallback(callback);
+
+        RxProcess rxProcess = new RxProcess(processFactory, processKiller, "sh");
+        RxProcess.Session session = rxProcess.open().test().awaitCount(1).assertNoTimeout().values().get(0);
+        assertThat(mockProcesses.get(0).isAlive(), is(true));
+
+        session.destroy().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout();
+        assertThat(mockProcesses.get(0).isAlive(), is(false));
+
+        verify(callback).onProcessStart(mockProcesses.get(0));
+        verify(callback).onProcessEnd(mockProcesses.get(0));
     }
 
 }

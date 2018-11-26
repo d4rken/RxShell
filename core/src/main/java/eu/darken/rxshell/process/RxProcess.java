@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.WeakReference;
 
 import eu.darken.rxshell.extra.ApiWrap;
 import eu.darken.rxshell.extra.RXSDebug;
@@ -48,17 +49,20 @@ public class RxProcess {
         if (session == null) {
             this.session = Single
                     .create(new SingleOnSubscribe<Session>() {
+                        WeakReference<Process> debugRef;
+
                         @Override
-                        public void subscribe(SingleEmitter<Session> emitter) throws Exception {
+                        public void subscribe(SingleEmitter<Session> emitter) {
                             processCreator
                                     .doFinally((Action) () -> {
                                         synchronized (RxProcess.this) {
+                                            RXSDebug.notifyOnProcessEnd(debugRef != null ? debugRef.get() : null);
                                             if (RXSDebug.isDebug()) Timber.tag(TAG).v("Process finished, clearing session");
                                             session = null;
                                         }
                                     })
                                     .subscribe(new Observer<Process>() {
-                                        private Disposable disposable;
+                                        Disposable disposable;
 
                                         @Override
                                         public void onSubscribe(Disposable disposable) {
@@ -67,6 +71,8 @@ public class RxProcess {
 
                                         @Override
                                         public void onNext(Process process) {
+                                            debugRef = new WeakReference<>(process);
+                                            RXSDebug.notifyOnProcessStart(process);
                                             if (RXSDebug.isDebug()) Timber.tag(TAG).v("processCreator:onNext(%s)", process);
                                             emitter.onSuccess(new Session(process, disposable));
                                         }
@@ -107,7 +113,7 @@ public class RxProcess {
 
     public static class Session {
         private static final String TAG = RxProcess.TAG + ":Session";
-        private final Process process;
+        final Process process;
         private final Disposable disposable;
         private final Single<Integer> waitFor;
         private final Completable destroy;
