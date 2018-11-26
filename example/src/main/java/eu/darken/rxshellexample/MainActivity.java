@@ -24,7 +24,6 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.root_result) TextView rootResult;
     private RxCmdShell.Session session;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Timber.plant(new Timber.DebugTree());
