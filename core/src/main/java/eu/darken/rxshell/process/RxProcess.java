@@ -108,7 +108,7 @@ public class RxProcess {
     public synchronized Completable close() {
         if (RXSDebug.isDebug()) Timber.tag(TAG).v("close()");
         if (session == null) return Completable.complete();
-        else return session.flatMapCompletable(s -> s.destroy().andThen(s.waitFor().toCompletable()));
+        else return session.flatMapCompletable(s -> s.destroy().andThen(s.waitFor().ignoreElement()));
     }
 
     public static class Session {
