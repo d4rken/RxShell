@@ -114,16 +114,14 @@ public class RxProcess {
     public static class Session {
         private static final String TAG = RxProcess.TAG + ":Session";
         final Process process;
-        private final Disposable disposable;
         private final Single<Integer> waitFor;
         private final Completable destroy;
 
-        public Session(Process process, Disposable disposable) {
+        public Session(Process process, Disposable processDisposable) {
             this.process = process;
-            this.disposable = disposable;
             this.destroy = Completable
                     .create(e -> {
-                        disposable.dispose();
+                        processDisposable.dispose();
                         e.onComplete();
                     })
                     .subscribeOn(Schedulers.io())
