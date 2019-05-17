@@ -21,6 +21,14 @@ android {
         textOutput 'stdout'
         disable 'TimberTagLength'
     }
+    buildTypes {
+        debug {
+            minifyEnabled true
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+            debuggable false
+        }
+    }
 }
 afterEvaluate {
     javadoc.classpath += files(android.libraryVariants.collect { variant ->
