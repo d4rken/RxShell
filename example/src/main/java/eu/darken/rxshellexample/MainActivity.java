@@ -71,10 +71,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        session.close()
-                .doOnSubscribe(d -> session = null)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(i -> execute.setVisibility(View.INVISIBLE));
+        if (session != null) {
+            session.close()
+                    .doOnSubscribe(d -> session = null)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(i -> execute.setVisibility(View.INVISIBLE));
+        }
     }
 
     @Override
