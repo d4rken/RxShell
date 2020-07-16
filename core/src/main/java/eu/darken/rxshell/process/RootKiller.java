@@ -14,10 +14,10 @@ import java.util.regex.Pattern;
 
 import eu.darken.rxshell.extra.RXSDebug;
 import eu.darken.rxshell.shell.LineReader;
-import io.reactivex.Observable;
-import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.Single;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.ObservableOnSubscribe;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import timber.log.Timber;
 
 public class RootKiller implements ProcessKiller {

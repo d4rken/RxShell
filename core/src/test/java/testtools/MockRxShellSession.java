@@ -5,10 +5,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import eu.darken.rxshell.shell.LineReader;
 import eu.darken.rxshell.shell.RxShell;
-import io.reactivex.Completable;
-import io.reactivex.Single;
-import io.reactivex.processors.PublishProcessor;
-import io.reactivex.processors.ReplayProcessor;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.processors.PublishProcessor;
+import io.reactivex.rxjava3.processors.ReplayProcessor;
 import timber.log.Timber;
 
 import static org.mockito.ArgumentMatchers.any;

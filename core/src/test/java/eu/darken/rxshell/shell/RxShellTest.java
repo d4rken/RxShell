@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import eu.darken.rxshell.process.RxProcess;
-import io.reactivex.Completable;
-import io.reactivex.Single;
-import io.reactivex.SingleEmitter;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.schedulers.Schedulers;
-import io.reactivex.subjects.ReplaySubject;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleEmitter;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.subjects.ReplaySubject;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import testtools.BaseTest;
 import testtools.MockInputStream;
 import testtools.MockOutputStream;
@@ -92,7 +92,7 @@ public class RxShellTest extends BaseTest {
         RxShell rxShell = new RxShell(rxProcess);
 
         TestObserver<RxShell.Session> sessionObs = rxShell.open().test();
-        RxShell.Session session = sessionObs.awaitCount(1).assertNoTimeout().values().get(0);
+        RxShell.Session session = sessionObs.awaitCount(1).assertNoErrors().values().get(0);
         verify(rxProcess).open();
 
         session.writeLine("test", true);
@@ -112,16 +112,16 @@ public class RxShellTest extends BaseTest {
         // Simulate process cleanly exiting
         sessionPub.onComplete();
 
-        outputObs.awaitCount(1).assertNoTimeout().assertValue("outputtest");
+        outputObs.awaitCount(1).assertNoErrors().assertValue("outputtest");
         outputStream.close();
 
 
-        errorObs.awaitCount(1).assertNoTimeout().assertValue("errortest");
+        errorObs.awaitCount(1).assertNoErrors().assertValue("errortest");
         errorStream.close();
 
-        sessionObs.awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
-        outputObs.awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
-        errorObs.awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
+        sessionObs.awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertComplete();
+        outputObs.awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertComplete();
+        errorObs.awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertComplete();
     }
 
     @Test
@@ -131,21 +131,21 @@ public class RxShellTest extends BaseTest {
 
         TestObserver<RxShell.Session> sessionObs = rxShell.open().test();
 
-        await().pollDelay(1, TimeUnit.SECONDS).until(sessionObs::isTerminated, is(true));
+        sessionObs.awaitDone(1, TimeUnit.SECONDS).assertError(InterruptedException.class);
         sessionObs.assertNoValues();
     }
 
     @Test
     public void testIsAlive() {
         RxShell rxShell = new RxShell(rxProcess);
-        RxShell.Session session = rxShell.open().test().awaitCount(1).assertNoTimeout().values().get(0);
-        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
+        RxShell.Session session = rxShell.open().test().awaitCount(1).assertNoErrors().values().get(0);
+        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(true);
 
         when(rxProcessSession.isAlive()).thenReturn(Single.just(false));
-        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(false);
+        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(false);
 
         when(rxProcessSession.isAlive()).thenReturn(Single.just(true));
-        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
+        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(true);
 
         verify(rxProcessSession, times(3)).isAlive();
     }
@@ -155,40 +155,40 @@ public class RxShellTest extends BaseTest {
         RxShell rxShell = new RxShell(rxProcess);
 
         when(rxProcessSession.isAlive()).thenReturn(Single.just(false));
-        rxShell.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(false);
+        rxShell.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(false);
 
         // No session means not alive!
         when(rxProcessSession.isAlive()).thenReturn(Single.just(true));
-        rxShell.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(false);
-        rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout();
-        rxShell.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
+        rxShell.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(false);
+        rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors();
+        rxShell.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(true);
 
         when(rxProcessSession.isAlive()).thenReturn(Single.just(false));
-        rxShell.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(false);
+        rxShell.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(false);
     }
 
     @Test
-    public void testWaitFor() {
+    public void testWaitFor() throws InterruptedException {
         RxShell rxShell = new RxShell(rxProcess);
-        RxShell.Session session = rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
-        session.waitFor().test().awaitDone(1, TimeUnit.SECONDS).assertTimeout();
+        RxShell.Session session = rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().values().get(0);
+        assertThat(session.waitFor().test().await(1, TimeUnit.SECONDS), is(false));
 
         waitForEmitter.onSuccess(55);
-        session.waitFor().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(55);
+        session.waitFor().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(55);
     }
 
     @Test
     public void testCancel() {
         RxShell rxShell = new RxShell(rxProcess);
-        RxShell.Session session = rxShell.open().test().awaitCount(1).assertNoTimeout().values().get(0);
-        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
+        RxShell.Session session = rxShell.open().test().awaitCount(1).assertNoErrors().values().get(0);
+        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(true);
 
-        session.cancel().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
+        session.cancel().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertComplete();
 
-        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(false);
+        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(false);
 
         // Idempotent
-        session.cancel().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
+        session.cancel().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertComplete();
 
         verify(rxProcessSession).destroy();
     }
@@ -196,102 +196,104 @@ public class RxShellTest extends BaseTest {
     @Test
     public void testCancel_indirect() {
         RxShell rxShell = new RxShell(rxProcess);
-        rxShell.cancel().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
+        rxShell.cancel().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertComplete();
 
-        RxShell.Session session = rxShell.open().test().awaitCount(1).assertNoTimeout().values().get(0);
-        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
+        RxShell.Session session = rxShell.open().test().awaitCount(1).assertNoErrors().values().get(0);
+        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(true);
 
-        rxShell.cancel().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
+        rxShell.cancel().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertComplete();
 
         // Idempotent
-        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(false);
+        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(false);
     }
 
     @Test
     public void testClose() throws IOException {
         RxShell rxShell = new RxShell(rxProcess);
-        RxShell.Session session = rxShell.open().test().awaitDone(10, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
+        RxShell.Session session = rxShell.open().test().awaitDone(10, TimeUnit.SECONDS).assertNoErrors().values().get(0);
 
-        session.close().test().awaitDone(10, TimeUnit.SECONDS).assertNoTimeout().assertValue(0);
+        session.close().test().awaitDone(10, TimeUnit.SECONDS).assertNoErrors().assertValue(0);
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> cmdStream.getData().toString().contains("exit" + LineReader.getLineSeparator()));
         await().atMost(1, TimeUnit.SECONDS).until(() -> cmdStream.isOpen(), is(false));
 
         // Idempotent
-        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(0);
+        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(0);
     }
 
     @Test
     public void testClose_exception() {
         RxShell rxShell = new RxShell(rxProcess);
-        RxShell.Session session = rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
+        RxShell.Session session = rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().values().get(0);
 
         cmdStream.setExceptionOnClose(new IOException());
 
-        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertNoErrors().assertValue(0);
+        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertNoErrors().assertValue(0);
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> cmdStream.getData().toString().contains("exit" + LineReader.getLineSeparator()));
         await().atMost(1, TimeUnit.SECONDS).until(() -> cmdStream.isOpen(), is(false));
 
         // Idempotent
-        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertNoErrors().assertValue(0);
+        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertNoErrors().assertValue(0);
     }
 
     @Test
     public void testClose_indirect() {
         RxShell rxShell = new RxShell(rxProcess);
-        rxShell.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(0);
+        rxShell.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(0);
 
-        RxShell.Session session = rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
-        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(0);
+        RxShell.Session session = rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().values().get(0);
+        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(0);
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> cmdStream.getData().toString().contains("exit" + LineReader.getLineSeparator()));
         await().atMost(1, TimeUnit.SECONDS).until(() -> cmdStream.isOpen(), is(false));
 
         // Idempotent
-        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(0);
+        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(0);
     }
 
     @Test
     public void testClose_afterCancel() throws IOException {
         RxShell rxShell = new RxShell(rxProcess);
-        RxShell.Session session = rxShell.open().test().awaitCount(1).assertNoTimeout().values().get(0);
-        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
+        RxShell.Session session = rxShell.open().test().awaitCount(1).assertNoErrors().values().get(0);
+        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(true);
 
-        session.cancel().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
-        rxShell.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(0);
+        session.cancel().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertComplete();
+        rxShell.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(0);
     }
 
     @Test
     public void testClose_raceconditions() {
         RxShell rxShell = new RxShell(rxProcess);
         when(rxProcessSession.waitFor()).thenReturn(Single.just(0).delay(100, TimeUnit.MILLISECONDS));
-        RxShell.Session session = rxShell.open().test().awaitCount(1).assertNoTimeout().values().get(0);
+        RxShell.Session session = rxShell.open().test().awaitCount(1).assertNoErrors().values().get(0);
 
         int cnt = 1000;
         List<TestObserver<Integer>> testObservers = new ArrayList<>();
-        for (int i = 0; i < cnt; i++) testObservers.add(session.close().observeOn(Schedulers.newThread()).test());
+        for (int i = 0; i < cnt; i++)
+            testObservers.add(session.close().observeOn(Schedulers.newThread()).test());
 
         assertThat(testObservers.size(), is(cnt));
 
-        for (TestObserver<Integer> t : testObservers) t.awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(0);
+        for (TestObserver<Integer> t : testObservers)
+            t.awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(0);
 
         assertThat(cmdStream.getData().toString(), is("exit" + LineReader.getLineSeparator()));
     }
 
     @Test
-    public void testProcessCompletion_linereaders_dont_terminate_early() throws IOException {
+    public void testProcessCompletion_linereaders_dont_terminate_early() throws IOException, InterruptedException {
         RxShell rxShell = new RxShell(rxProcess);
-        RxShell.Session session = rxShell.open().test().awaitCount(1).assertNoTimeout().values().get(0);
+        RxShell.Session session = rxShell.open().test().awaitCount(1).assertComplete().values().get(0);
         TestSubscriber<String> outputObs = session.outputLines().test();
         TestSubscriber<String> errorObs = session.errorLines().test();
 
-        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(0);
+        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(0);
 
         await().atMost(1, TimeUnit.SECONDS).until(() -> cmdStream.isOpen(), is(false));
 
-        await().pollDelay(1, TimeUnit.SECONDS).until(outputObs::isTerminated, is(false));
-        await().pollDelay(1, TimeUnit.SECONDS).until(errorObs::isTerminated, is(false));
+        outputObs.assertNotComplete();
+        errorObs.assertNotComplete();
 
         await().atMost(1, TimeUnit.SECONDS).until(() -> outputStream.isOpen(), is(true));
         await().atMost(1, TimeUnit.SECONDS).until(() -> errorStream.isOpen(), is(true));
@@ -302,27 +304,27 @@ public class RxShellTest extends BaseTest {
         await().atMost(1, TimeUnit.SECONDS).until(() -> outputStream.isOpen(), is(false));
         await().atMost(1, TimeUnit.SECONDS).until(() -> errorStream.isOpen(), is(false));
 
-        await().atMost(1, TimeUnit.SECONDS).until(outputObs::isTerminated, is(true));
-        await().atMost(1, TimeUnit.SECONDS).until(errorObs::isTerminated, is(true));
+        outputObs.assertComplete();
+        errorObs.assertComplete();
     }
 
     @Test
     public void testLineReaders_shared_keep_alive() throws IOException {
         RxShell rxShell = new RxShell(rxProcess);
-        TestObserver<RxShell.Session> sessionObs = rxShell.open().test().awaitCount(1).assertNoTimeout();
+        TestObserver<RxShell.Session> sessionObs = rxShell.open().test().awaitCount(1).assertNoErrors();
 
         RxShell.Session session = sessionObs.values().get(0);
 
-        session.outputLines().test().assertNotTerminated().dispose();
-        session.errorLines().test().assertNotTerminated().dispose();
+        session.outputLines().test().assertNotComplete().cancel();
+        session.errorLines().test().assertNotComplete().cancel();
 
-        session.outputLines().test().assertNotTerminated().dispose();
-        session.errorLines().test().assertNotTerminated().dispose();
+        session.outputLines().test().assertNotComplete().cancel();
+        session.errorLines().test().assertNotComplete().cancel();
 
         await().pollDelay(100, TimeUnit.MILLISECONDS).atMost(1, TimeUnit.SECONDS).until(() -> outputStream.isOpen(), is(true));
         await().pollDelay(100, TimeUnit.MILLISECONDS).atMost(1, TimeUnit.SECONDS).until(() -> errorStream.isOpen(), is(true));
 
-        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(0);
+        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(0);
 
         await().atMost(1, TimeUnit.SECONDS).until(() -> outputStream.isOpen(), is(false));
         await().atMost(1, TimeUnit.SECONDS).until(() -> errorStream.isOpen(), is(false));
@@ -331,11 +333,11 @@ public class RxShellTest extends BaseTest {
     @Test
     public void testReinit() {
         RxShell rxShell = new RxShell(rxProcess);
-        RxShell.Session session1 = rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
+        RxShell.Session session1 = rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().values().get(0);
         verify(rxProcess).open();
-        session1.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout();
+        session1.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors();
 
-        RxShell.Session session2 = rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
+        RxShell.Session session2 = rxShell.open().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().values().get(0);
         assertThat(session2, is(not(session1)));
         verify(rxProcess, times(2)).open();
     }

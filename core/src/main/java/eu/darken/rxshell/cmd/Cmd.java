@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.UUID;
 
 import eu.darken.rxshell.process.RxProcess;
-import io.reactivex.Single;
-import io.reactivex.processors.FlowableProcessor;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
 
 public class Cmd {
     public static class ExitCode extends RxProcess.ExitCode {

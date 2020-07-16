@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import eu.darken.rxshell.cmd.Cmd;
 import eu.darken.rxshell.cmd.RxCmdShell;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import testhelper.BaseTest;
 
 import static org.hamcrest.Matchers.not;

@@ -9,9 +9,9 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import io.reactivex.Single;
-import io.reactivex.processors.PublishProcessor;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.processors.PublishProcessor;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import testtools.BaseTest;
 
 import static junit.framework.Assert.assertEquals;
@@ -123,7 +123,7 @@ public class CmdBuilderTest extends BaseTest {
         when(shell.open()).thenReturn(Single.error(new IOException()));
         when(shell.isAlive()).thenReturn(Single.just(false));
 
-        Cmd.builder("").submit(shell).test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertError(IOException.class);
+        Cmd.builder("").submit(shell).test().awaitDone(1, TimeUnit.SECONDS).assertError(IOException.class);
     }
 
     @Test
@@ -186,8 +186,8 @@ public class CmdBuilderTest extends BaseTest {
         assertThat(result.getExitCode(), is(Cmd.ExitCode.EXCEPTION));
         assertThat(result.getErrors(), is(nullValue()));
         assertThat(result.getOutput(), is(nullValue()));
-        assertThat(errorSub.valueCount(), is(1));
-        assertThat(outputSub.valueCount(), is(0));
+        errorSub.assertValueCount(1);
+        outputSub.assertValueCount(0);
         errorSub.assertComplete();
         outputSub.assertComplete();
     }

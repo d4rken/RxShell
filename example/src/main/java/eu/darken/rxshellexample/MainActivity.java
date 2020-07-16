@@ -12,9 +12,9 @@ import butterknife.OnClick;
 import eu.darken.rxshell.cmd.Cmd;
 import eu.darken.rxshell.cmd.RxCmdShell;
 import eu.darken.rxshell.root.RootContext;
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity {

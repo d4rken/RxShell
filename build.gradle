@@ -1,12 +1,12 @@
 buildscript {
-    def versionMajor = 1
+    def versionMajor = 3
     def versionMinor = 0
-    def versionPatch = 9
+    def versionPatch = 0
 
     ext.versions = [
             'versionCode'        : versionMajor * 10000 + versionMinor * 100 + versionPatch,
             'versionName'        : "${versionMajor}.${versionMinor}.${versionPatch}",
-            'minSdk'             : 16,
+            'minSdk'             : 21,
             'targetSdk'          : 28,
             'compileSdk'         : 28,
             'sourceCompatibility': JavaVersion.VERSION_1_8,
@@ -52,8 +52,8 @@ buildscript {
             ],
             androidPlugin: 'com.android.tools.build:gradle:3.1.2',
             timber       : "com.jakewharton.timber:timber:4.7.1",
-            rxJava       : "io.reactivex.rxjava2:rxjava:2.2.4",
-            rxJavaReplay : "com.jakewharton.rx2:replaying-share:2.1.0",
+            rxJava       : "io.reactivex.rxjava3:rxjava:3.0.4",
+            rxJavaReplay : "com.jakewharton.rx3:replaying-share:3.0.0",
             jUnit        : "junit:junit:4.12",
             mockito      : "org.mockito:mockito-core:2.8.9",
             awaitility   : "org.awaitility:awaitility:3.0.0",

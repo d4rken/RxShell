@@ -12,7 +12,7 @@ import java.util.concurrent.TimeoutException;
 import eu.darken.rxshell.cmd.Cmd;
 import eu.darken.rxshell.cmd.RxCmdShell;
 import eu.darken.rxshell.extra.RxCmdShellHelper;
-import io.reactivex.Single;
+import io.reactivex.rxjava3.core.Single;
 import timber.log.Timber;
 
 public class Root {

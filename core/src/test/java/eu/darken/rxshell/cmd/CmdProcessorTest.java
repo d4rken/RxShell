@@ -15,10 +15,10 @@ import java.util.concurrent.TimeUnit;
 import eu.darken.rxshell.extra.EnvVar;
 import eu.darken.rxshell.process.RxProcess;
 import eu.darken.rxshell.shell.RxShell;
-import io.reactivex.observers.TestObserver;
-import io.reactivex.processors.PublishProcessor;
-import io.reactivex.schedulers.Schedulers;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.reactivex.rxjava3.processors.PublishProcessor;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import testtools.BaseTest;
 import testtools.MockRxShellSession;
 import testtools.TestHelper;
@@ -58,13 +58,13 @@ public class CmdProcessorTest extends BaseTest {
     @Test
     public void testCommand_normal() throws IOException {
         processor.attach(session);
-        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
+        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(true);
 
         Cmd cmd = Cmd.builder("echo straw", "error berry").build();
-        final TestObserver<Cmd.Result> observer = processor.submit(cmd).test().awaitDone(3, TimeUnit.SECONDS).assertNoTimeout();
+        final TestObserver<Cmd.Result> observer = processor.submit(cmd).test().awaitDone(3, TimeUnit.SECONDS).assertNoErrors();
         final Cmd.Result result = observer.assertValueCount(1).values().get(0);
 
-        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(0);
+        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(0);
 
         assertThat(result.getExitCode(), is(0));
         assertThat(result.getOutput().get(0), is("straw"));
@@ -89,14 +89,14 @@ public class CmdProcessorTest extends BaseTest {
     @Test
     public void testCommand_input_error() throws IOException {
         processor.attach(session);
-        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(true);
+        session.isAlive().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(true);
         doThrow(new IOException()).when(session).writeLine(anyString(), anyBoolean());
 
         Cmd cmd = Cmd.builder("echo straw", "error berry").build();
-        final TestObserver<Cmd.Result> observer = processor.submit(cmd).test().awaitDone(3, TimeUnit.SECONDS).assertNoTimeout();
+        final TestObserver<Cmd.Result> observer = processor.submit(cmd).test().awaitDone(3, TimeUnit.SECONDS).assertNoErrors();
         final Cmd.Result result = observer.assertValueCount(1).values().get(0);
 
-        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValue(1);
+        session.close().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValue(1);
 
         assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
 
@@ -108,7 +108,7 @@ public class CmdProcessorTest extends BaseTest {
     public void testCommand_empty() {
         processor.attach(session);
         Cmd cmd = Cmd.builder("").build();
-        final Cmd.Result result = processor.submit(cmd).test().awaitDone(2, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
+        final Cmd.Result result = processor.submit(cmd).test().awaitDone(2, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1).values().get(0);
 
         assertThat(result.getExitCode(), is(0));
         assertThat(result.getOutput(), is(notNullValue()));
@@ -127,13 +127,13 @@ public class CmdProcessorTest extends BaseTest {
 
         for (int i = 0; i < testObservers.size(); i++) {
             final TestObserver<Cmd.Result> t = testObservers.get(i);
-            t.awaitDone(2, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
+            t.awaitDone(2, TimeUnit.SECONDS).assertNoErrors().assertComplete();
             assertThat(t.values().get(0).getExitCode(), is(0));
 
-            assertThat(t.values().get(0).getOutput().get(0), is("o" + String.valueOf(i)));
+            assertThat(t.values().get(0).getOutput().get(0), is("o" + i));
             assertThat(t.values().get(0).getOutput().size(), is(1));
 
-            assertThat(t.values().get(0).getErrors().get(0), is("e" + String.valueOf(i)));
+            assertThat(t.values().get(0).getErrors().get(0), is("e" + i));
             assertThat(t.values().get(0).getErrors().size(), is(1));
         }
     }
@@ -156,8 +156,8 @@ public class CmdProcessorTest extends BaseTest {
             testSubscribers.add(new EnvVar<>(resultObserver, outputObserver));
         }
         for (EnvVar<TestObserver<Cmd.Result>, TestSubscriber<String>> envVar : testSubscribers) {
-            envVar.first.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
-            envVar.second.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(11);
+            envVar.first.awaitDone(5, TimeUnit.SECONDS).assertNoErrors().assertComplete();
+            envVar.second.awaitDone(5, TimeUnit.SECONDS).assertNoErrors().assertValueCount(11);
         }
     }
 
@@ -179,16 +179,16 @@ public class CmdProcessorTest extends BaseTest {
             testSubscribers.add(new EnvVar<>(resultObserver, outputObserver));
         }
         for (EnvVar<TestObserver<Cmd.Result>, TestSubscriber<String>> envVar : testSubscribers) {
-            envVar.first.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
-            envVar.second.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(11);
+            envVar.first.awaitDone(5, TimeUnit.SECONDS).assertNoErrors().assertComplete();
+            envVar.second.awaitDone(5, TimeUnit.SECONDS).assertNoErrors().assertValueCount(11);
         }
     }
 
     @Test
     public void testIsIdle() {
-        processor.isIdle().test().assertValueCount(1).assertNotTerminated().assertValue(true);
+        processor.isIdle().test().assertValueCount(1).assertNotComplete().assertValue(true);
         processor.attach(session);
-        processor.isIdle().test().assertValueCount(1).assertNotTerminated().assertValue(true);
+        processor.isIdle().test().assertValueCount(1).assertNotComplete().assertValue(true);
 
         processor.submit(Cmd.builder("sleep 400").build()).subscribe();
         await().atMost(1, TimeUnit.SECONDS).until(() -> processor.isIdle().blockingFirst(), is(false));
@@ -213,7 +213,7 @@ public class CmdProcessorTest extends BaseTest {
         for (int i = 0; i < testObservers.size(); i++) {
             final TestObserver<Cmd.Result> t = testObservers.get(i);
             Timber.i("Awaiting: %d", i);
-            t.awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
+            t.awaitDone(5, TimeUnit.SECONDS).assertNoErrors().assertComplete();
             assertThat(t.values().get(0).getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
 
             assertThat(t.values().get(0).getOutput(), is(not(nullValue())));
@@ -230,7 +230,7 @@ public class CmdProcessorTest extends BaseTest {
                         .outputBuffer(false)
                         .errorBuffer(false)
                         .build())
-                .test().awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
+                .test().awaitDone(5, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1).values().get(0);
 
         assertThat(result.getOutput(), is(nullValue()));
         assertThat(result.getErrors(), is(nullValue()));
@@ -242,7 +242,7 @@ public class CmdProcessorTest extends BaseTest {
 
         final Cmd.Result result = processor
                 .submit(Cmd.builder("sleep 5000").timeout(1000).build())
-                .test().awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
+                .test().awaitDone(5, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1).values().get(0);
 
         assertThat(result.getExitCode(), is(Cmd.ExitCode.TIMEOUT));
 
@@ -260,7 +260,7 @@ public class CmdProcessorTest extends BaseTest {
         }).start();
 
         final Cmd.Result result = processor.submit(Cmd.builder("sleep 5000").build())
-                .test().awaitDone(2, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
+                .test().awaitDone(2, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1).values().get(0);
 
         assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
         assertThat(result.getOutput(), is(not(nullValue())));
@@ -277,7 +277,7 @@ public class CmdProcessorTest extends BaseTest {
         }).start();
 
         final Cmd.Result result = processor.submit(Cmd.builder("sleep 1000").build())
-                .test().awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
+                .test().awaitDone(5, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1).values().get(0);
 
         assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
     }
@@ -292,7 +292,7 @@ public class CmdProcessorTest extends BaseTest {
         }).start();
 
         final Cmd.Result result = processor.submit(Cmd.builder("sleep 1000").build())
-                .test().awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
+                .test().awaitDone(5, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1).values().get(0);
 
         assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
     }
@@ -308,7 +308,7 @@ public class CmdProcessorTest extends BaseTest {
         }).start();
 
         final Cmd.Result result = processor.submit(Cmd.builder("sleep 5000").build())
-                .test().awaitDone(2, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
+                .test().awaitDone(2, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1).values().get(0);
 
         assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
     }
@@ -317,11 +317,11 @@ public class CmdProcessorTest extends BaseTest {
     public void testNoReuse() throws IOException {
         processor.attach(session);
 
-        final Cmd.Result result = processor.submit(Cmd.builder("echo straw").build()).test().awaitDone(3, TimeUnit.SECONDS).assertNoTimeout().values().get(0);
+        final Cmd.Result result = processor.submit(Cmd.builder("echo straw").build()).test().awaitDone(3, TimeUnit.SECONDS).assertNoErrors().values().get(0);
         assertThat(result.getExitCode(), is(RxProcess.ExitCode.OK));
         assertThat(result.getOutput(), Matchers.contains("straw"));
 
-        session.cancel().test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout();
+        session.cancel().test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors();
 
         MockRxShellSession mockSession2 = new MockRxShellSession();
         processor.attach(mockSession2.getSession());
@@ -336,7 +336,7 @@ public class CmdProcessorTest extends BaseTest {
             processor.attach(mockSession.getSession());
 
             Cmd cmd = Cmd.builder("sleep 100").build();
-            final Cmd.Result result = processor.submit(cmd).test().awaitDone(5, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
+            final Cmd.Result result = processor.submit(cmd).test().awaitDone(5, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1).values().get(0);
             assertThat(result.getExitCode(), is(Cmd.ExitCode.SHELL_DIED));
         }
     }
@@ -353,7 +353,7 @@ public class CmdProcessorTest extends BaseTest {
                 mockSession.getSession().cancel().subscribe();
             }).start();
 
-            processor.submit(Cmd.builder("sleep 100").build()).test().awaitDone(2, TimeUnit.SECONDS).assertNoTimeout().assertComplete();
+            processor.submit(Cmd.builder("sleep 100").build()).test().awaitDone(2, TimeUnit.SECONDS).assertNoErrors().assertComplete();
 
             assertThat(getUncaughtExceptions().isEmpty(), is(true));
         }

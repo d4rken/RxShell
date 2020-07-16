@@ -18,12 +18,12 @@ import eu.darken.rxshell.process.RootKiller;
 import eu.darken.rxshell.process.RxProcess;
 import eu.darken.rxshell.process.UserKiller;
 import eu.darken.rxshell.shell.RxShell;
-import io.reactivex.Completable;
-import io.reactivex.Single;
-import io.reactivex.SingleObserver;
-import io.reactivex.SingleOnSubscribe;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleObserver;
+import io.reactivex.rxjava3.core.SingleOnSubscribe;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import timber.log.Timber;
 
 

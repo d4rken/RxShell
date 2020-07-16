@@ -10,9 +10,9 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import io.reactivex.processors.PublishProcessor;
-import io.reactivex.processors.ReplayProcessor;
-import io.reactivex.subscribers.TestSubscriber;
+import io.reactivex.rxjava3.processors.PublishProcessor;
+import io.reactivex.rxjava3.processors.ReplayProcessor;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import testtools.BaseTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,7 +40,7 @@ public class HarvesterTest extends BaseTest {
         when(cmd.getMarker()).thenReturn(uuid);
 
         TestSubscriber<OutputHarvester.Crop> testSubscriber = publisher.compose(harvesterFactory.forOutput(publisher, cmd)).test();
-        testSubscriber.assertNotTerminated();
+        testSubscriber.assertNoErrors();
 
         publisher.onNext(uuid + " 255");
 
@@ -56,7 +56,7 @@ public class HarvesterTest extends BaseTest {
         when(cmd.getMarker()).thenReturn(uuid);
 
         TestSubscriber<Harvester.Crop> testSubscriber = publisher.compose(harvesterFactory.forError(publisher, cmd)).test();
-        testSubscriber.assertNotTerminated();
+        testSubscriber.assertNoErrors();
 
         publisher.onNext(uuid);
 
@@ -70,7 +70,7 @@ public class HarvesterTest extends BaseTest {
         when(cmd.isOutputBufferEnabled()).thenReturn(true);
 
         TestSubscriber<OutputHarvester.Crop> testSubscriber = publisher.compose(harvesterFactory.forOutput(publisher, cmd)).test();
-        testSubscriber.assertNotTerminated();
+        testSubscriber.assertNoErrors();
 
         publisher.onNext("some-output");
         publisher.onNext(uuid + " 255");
@@ -89,7 +89,7 @@ public class HarvesterTest extends BaseTest {
         when(cmd.isErrorBufferEnabled()).thenReturn(true);
 
         TestSubscriber<Harvester.Crop> testSubscriber = publisher.compose(harvesterFactory.forError(publisher, cmd)).test();
-        testSubscriber.assertNotTerminated();
+        testSubscriber.assertNoErrors();
 
         publisher.onNext("some-errors");
         publisher.onNext(uuid + " 255");
@@ -108,7 +108,7 @@ public class HarvesterTest extends BaseTest {
         when(cmd.isOutputBufferEnabled()).thenReturn(true);
 
         TestSubscriber<OutputHarvester.Crop> testSubscriber = publisher.compose(harvesterFactory.forOutput(publisher, cmd)).test();
-        testSubscriber.assertNotTerminated();
+        testSubscriber.assertNoErrors();
 
         publisher.onNext("some-output");
         publisher.onComplete();
@@ -127,7 +127,7 @@ public class HarvesterTest extends BaseTest {
         when(cmd.isErrorBufferEnabled()).thenReturn(true);
 
         TestSubscriber<Harvester.Crop> testSubscriber = publisher.compose(harvesterFactory.forError(publisher, cmd)).test();
-        testSubscriber.assertNotTerminated();
+        testSubscriber.assertNoErrors();
 
         publisher.onNext("some-errors");
         publisher.onComplete();
@@ -166,9 +166,9 @@ public class HarvesterTest extends BaseTest {
     public void testDownstreamCancel_output() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         TestSubscriber<OutputHarvester.Crop> testSubscriber = publisher.doOnCancel(latch::countDown).compose(harvesterFactory.forOutput(publisher, cmd)).test();
-        testSubscriber.assertNotTerminated();
+        testSubscriber.assertNoErrors();
 
-        testSubscriber.dispose();
+        testSubscriber.cancel();
 
         assertThat(latch.await(1, TimeUnit.SECONDS), is(true));
     }
@@ -177,9 +177,9 @@ public class HarvesterTest extends BaseTest {
     public void testDownstreamCancel_errors() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         TestSubscriber<OutputHarvester.Crop> testSubscriber = publisher.doOnCancel(latch::countDown).compose(harvesterFactory.forOutput(publisher, cmd)).test();
-        testSubscriber.assertNotTerminated();
+        testSubscriber.assertNoErrors();
 
-        testSubscriber.dispose();
+        testSubscriber.cancel();
 
         assertThat(latch.await(1, TimeUnit.SECONDS), is(true));
     }
@@ -196,8 +196,8 @@ public class HarvesterTest extends BaseTest {
         publisher.onNext("some-output");
         publisher.onNext(uuid + " 255");
 
-        processor.test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).assertValue("some-output");
-        OutputHarvester.Crop crop = testSubscriber.awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
+        processor.test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1).assertValue("some-output");
+        OutputHarvester.Crop crop = testSubscriber.awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1).values().get(0);
         assertThat(crop.exitCode, is(255));
         assertThat(crop.buffer, is(nullValue()));
     }
@@ -214,8 +214,8 @@ public class HarvesterTest extends BaseTest {
         publisher.onNext("some-errors");
         publisher.onNext(uuid);
 
-        processor.test().awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).assertValue("some-errors");
-        Harvester.Crop crop = testSubscriber.awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1).values().get(0);
+        processor.test().awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1).assertValue("some-errors");
+        Harvester.Crop crop = testSubscriber.awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1).values().get(0);
         assertThat(crop.buffer, is(nullValue()));
     }
 
@@ -225,11 +225,11 @@ public class HarvesterTest extends BaseTest {
         when(cmd.getMarker()).thenReturn(uuid);
 
         TestSubscriber<OutputHarvester.Crop> testSubscriber = publisher.compose(harvesterFactory.forOutput(publisher, cmd)).test();
-        testSubscriber.assertNotTerminated();
+        testSubscriber.assertNoErrors();
 
         publisher.onNext(uuid + " &/()");
 
-        testSubscriber.awaitDone(1, TimeUnit.SECONDS).assertNoTimeout();
+        testSubscriber.awaitDone(1, TimeUnit.SECONDS).assertNoErrors();
         OutputHarvester.Crop crop = testSubscriber.values().get(0);
         assertThat(crop.exitCode, is(Cmd.ExitCode.EXCEPTION));
     }
@@ -240,10 +240,10 @@ public class HarvesterTest extends BaseTest {
         when(cmd.getMarker()).thenReturn(uuid);
 
         TestSubscriber<Harvester.Crop> testSubscriber = publisher.compose(harvesterFactory.forError(publisher, cmd)).test();
-        testSubscriber.assertNotTerminated();
+        testSubscriber.assertNoErrors();
 
         publisher.onNext(uuid + " §$%&");
 
-        testSubscriber.awaitDone(1, TimeUnit.SECONDS).assertNoTimeout().assertValueCount(1);
+        testSubscriber.awaitDone(1, TimeUnit.SECONDS).assertNoErrors().assertValueCount(1);
     }
 }

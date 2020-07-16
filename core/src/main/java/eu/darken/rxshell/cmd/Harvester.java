@@ -10,10 +10,10 @@ import java.io.IOException;
 import java.util.List;
 
 import eu.darken.rxshell.extra.RXSDebug;
-import io.reactivex.Flowable;
-import io.reactivex.FlowableTransformer;
-import io.reactivex.internal.subscriptions.SubscriptionHelper;
-import io.reactivex.processors.FlowableProcessor;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableTransformer;
+import io.reactivex.rxjava3.internal.subscriptions.SubscriptionHelper;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
 import timber.log.Timber;
 
 public abstract class Harvester<T extends Harvester.Crop> extends Flowable<T> implements FlowableTransformer<String, T> {

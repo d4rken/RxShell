@@ -41,7 +41,7 @@ dependencies {
 
     implementation deps.timber
 
-    implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
 
     testImplementation deps.jUnit
 }

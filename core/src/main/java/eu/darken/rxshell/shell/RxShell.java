@@ -5,16 +5,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 
 import eu.darken.rxshell.extra.RXSDebug;
 import eu.darken.rxshell.process.RxProcess;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.FlowableEmitter;
-import io.reactivex.Single;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.BackpressureStrategy;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableEmitter;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import timber.log.Timber;
 
 public class RxShell {
@@ -31,7 +32,7 @@ public class RxShell {
         if (session == null) {
             session = rxProcess.open()
                     .map(session -> {
-                        OutputStreamWriter writer = new OutputStreamWriter(session.input(), "UTF-8");
+                        OutputStreamWriter writer = new OutputStreamWriter(session.input(), StandardCharsets.UTF_8);
                         return new Session(session, writer);
                     })
                     .subscribeOn(Schedulers.io())
@@ -165,7 +166,7 @@ public class RxShell {
     static Flowable<String> makeLineStream(InputStream stream, String tag) {
         return Flowable
                 .create((FlowableEmitter<String> emitter) -> {
-                    final InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
+                    final InputStreamReader inputStreamReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
                     final BufferedReader reader = new BufferedReader(inputStreamReader);
                     emitter.setCancellable(() -> {
                         try {
