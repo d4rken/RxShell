@@ -9,10 +9,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import eu.darken.rxshell.extra.EnvVar;
+import eu.darken.rxshell.extra.RXSDebug;
 import eu.darken.rxshell.process.RxProcess;
 import eu.darken.rxshell.shell.RxShell;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -26,6 +28,8 @@ import timber.log.Timber;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -182,6 +186,47 @@ public class CmdProcessorTest extends BaseTest {
             envVar.first.awaitDone(5, TimeUnit.SECONDS).assertNoErrors().assertComplete();
             envVar.second.awaitDone(5, TimeUnit.SECONDS).assertNoErrors().assertValueCount(11);
         }
+    }
+
+    @Test
+    public void testCommand_outputProcessor_async_timing() {
+        RXSDebug.setDebug(true);
+
+        PublishProcessor<String> outputListener = PublishProcessor.create();
+
+        long startTime = System.currentTimeMillis();
+        List<Long> emissionTimes = new ArrayList<>();
+        outputListener
+                .observeOn(Schedulers.io())
+                .doOnNext(stringNotification -> {
+                    long timePassed = System.currentTimeMillis() - startTime;
+                    emissionTimes.add(timePassed);
+                    Timber.i("testCommand_outputProcessor_async_timing: %s (after %dms)", stringNotification, timePassed);
+                })
+                .subscribe();
+
+        Cmd
+                .builder(Arrays.asList(
+                        "echo 'Sleeping for 3s'",
+                        "sleep 3",
+                        "echo 'Slept for 3, now another 3'",
+                        "sleep 3",
+                        "echo 'Slept a total of 6'"
+                ))
+                .outputProcessor(outputListener)
+                .errorProcessor(outputListener)
+                .execute(RxCmdShell.builder().build());
+
+        // 'Sleeping for 3s'
+        assertThat(emissionTimes.get(0), is(lessThan(3000L)));
+
+        // 'Slept for 3, now another 3'
+        assertThat(emissionTimes.get(1), is(greaterThanOrEqualTo(3000L)));
+        assertThat(emissionTimes.get(1), is(lessThan(6000L)));
+
+        // 'Slept a total of 6'
+        assertThat(emissionTimes.get(2), is(greaterThanOrEqualTo(6000L)));
+        RXSDebug.setDebug(false);
     }
 
     @Test
