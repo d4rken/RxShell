@@ -23,6 +23,10 @@ public class RXSDebugTest {
 
     @Test
     public void testProcessCallbacks() {
+        for (RXSDebug.Callback callback : RXSDebug.CALLBACKS) {
+            RXSDebug.removeCallback(callback);
+        }
+
         RXSDebug.ProcessCallback callback = new RXSDebug.ProcessCallback() {
             @Override
             public void onProcessStart(Process process) {
