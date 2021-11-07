@@ -78,6 +78,10 @@ apply plugin: "com.github.kt3k.coveralls"
 apply plugin: 'java'
 
 allprojects {
+    tasks.withType(Test).configureEach {
+        forkEvery = 100
+    }
+
     apply plugin: 'jacoco'
     repositories {
         google()
