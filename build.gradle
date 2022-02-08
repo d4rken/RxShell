@@ -76,7 +76,7 @@ allprojects {
 
 subprojects { subProject ->
     def exclude = ['eu/darken/R*.class', '**/BuildConfig.class', '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*']
-    task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
+    task jacocoTestReport(type: JacocoReport, dependsOn: ['testReleaseUnitTest']) {
         reports {
             xml.enabled = true
             html.enabled = true
@@ -85,7 +85,7 @@ subprojects { subProject ->
         sourceDirectories.from files(["${project.projectDir}/src/main/java"])
         classDirectories.from files([fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: exclude)])
         executionData.from fileTree(dir: "$project.buildDir", includes: [
-                "jacoco/testDebugUnitTest.exec"
+                "jacoco/testReleaseUnitTest.exec"
         ])
 
         rootProject.coveralls.sourceDirs.addAll(sourceDirectories.flatten())

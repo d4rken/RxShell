@@ -25,6 +25,6 @@ jobs:
       - name: Run tests
         run: ./gradlew testRelease
       - name: Run coverage
-        run: ./gradlew jacocoTestReport coveralls
+        run: ./gradlew jacocoRootReport coveralls
       - name: Build with Gradle
         run: ./gradlew assembleDebug
