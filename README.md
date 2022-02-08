@@ -1,7 +1,7 @@
 # RxShell
 [ ![Build Status](https://travis-ci.org/d4rken/RxShell.svg?branch=master)](https://travis-ci.org/d4rken/RxShell)
-[ ![Download](https://api.bintray.com/packages/darken/maven/rxshell/images/download.svg) ](https://bintray.com/darken/maven/rxshell/_latestVersion)
-[![Coverage Status](https://coveralls.io/repos/github/d4rken/RxShell/badge.svg?branch=master)](https://coveralls.io/github/d4rken/RxShell?branch=master)
+[ ![Download](https://jitpack.io/v/d4rken/rxshell.svg)](https://jitpack.io/#d4rken/rxshell)
+[ ![Coverage Status](https://coveralls.io/repos/github/d4rken/RxShell/badge.svg?branch=master)](https://coveralls.io/github/d4rken/RxShell?branch=master)
 
 A library that helps your app interact with shells on Android.
 
