@@ -34,7 +34,3 @@ dependencies {
     testImplementation deps.mockito
     testImplementation deps.awaitility
 }
-
-bintrayConfig.libraryName = 'RxShell Root Extensions'
-bintrayConfig.artifact = 'root'
-bintrayConfig.libraryDescription = 'Root related extensions for RxShell'

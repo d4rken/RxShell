@@ -24,9 +24,5 @@ jobs:
         run: chmod +x gradlew
       - name: Run tests
         run: ./gradlew testRelease
-      - name: Run coverage
-        run: ./gradlew jacocoRootReport coveralls
       - name: Build with Gradle
         run: ./gradlew assembleDebug
-      - name: Upload Test Report
-        run: bash <(curl -s https://codecov.io/bash) -f "build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
