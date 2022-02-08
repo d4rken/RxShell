@@ -55,77 +55,12 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.1.1'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
     }
 }
 
-plugins {
-    id 'jacoco'
-    id 'com.github.kt3k.coveralls' version '2.12.0'
-}
-
-apply plugin: 'java'
-
 allprojects {
-    apply plugin: 'jacoco'
     repositories {
         google()
         jcenter()
     }
-}
-
-subprojects { subProject ->
-    def exclude = ['eu/darken/R*.class', '**/BuildConfig.class', '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*']
-    task jacocoTestReport(type: JacocoReport, dependsOn: ['testReleaseUnitTest']) {
-        reports {
-            xml.enabled = true
-            html.enabled = true
-        }
-
-        sourceDirectories.from files(["${project.projectDir}/src/main/java"])
-        classDirectories.from files([fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: exclude)])
-        executionData.from fileTree(dir: "$project.buildDir", includes: [
-                "jacoco/testReleaseUnitTest.exec"
-        ])
-
-        rootProject.coveralls.sourceDirs.addAll(sourceDirectories.flatten())
-    }
-
-    afterEvaluate {
-        def isLibrary = subProject.plugins.hasPlugin('android-library')
-
-        if (isLibrary) {
-            task javadoc(type: Javadoc) {
-                source = android.sourceSets.main.java.srcDirs
-                classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-            }
-        }
-    }
-}
-
-def publishedProjects = subprojects.findAll { !it.path.contains('example') }
-task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
-    description = 'Generates an aggregate report from all subprojects'
-
-    dependsOn(publishedProjects.jacocoTestReport)
-
-    additionalSourceDirs.from files(publishedProjects.sourceSets.main.allSource.srcDirs)
-    sourceDirectories.from files(publishedProjects.jacocoTestReport.sourceDirectories)
-    classDirectories.from files(publishedProjects.jacocoTestReport.classDirectories)
-    executionData.from files(publishedProjects.jacocoTestReport.executionData)
-
-    reports {
-        html.enabled = true
-        xml.enabled = true
-    }
-}
-
-coveralls {
-    jacocoReportPath = "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
-}
-
-tasks.coveralls {
-    group = 'Coverage reports'
-    description = 'Uploads the aggregated coverage report to Coveralls'
-    dependsOn jacocoRootReport
 }

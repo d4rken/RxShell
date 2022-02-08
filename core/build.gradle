@@ -41,7 +41,3 @@ dependencies {
     testImplementation deps.mockito
     testImplementation deps.awaitility
 }
-
-bintrayConfig.libraryName = 'RxShell'
-bintrayConfig.artifact = 'core'
-bintrayConfig.libraryDescription = 'Android shells with RxJava support.'
