@@ -7,7 +7,6 @@ android {
     }
 
     compileSdkVersion versions.compileSdk
-    buildToolsVersion versions.buildTools
 
     defaultConfig {
         minSdkVersion versions.minSdk
@@ -15,12 +14,12 @@ android {
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
-
-    lintOptions {
-        textReport true
-        textOutput 'stdout'
+    lint {
         disable 'TimberTagLength'
+        textOutput file('stdout')
+        textReport true
     }
+
 }
 
 dependencies {

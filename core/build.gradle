@@ -7,7 +7,6 @@ android {
     }
 
     compileSdkVersion versions.compileSdk
-    buildToolsVersion versions.buildTools
 
     defaultConfig {
         minSdkVersion versions.minSdk
@@ -16,25 +15,20 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
-    lintOptions {
-        textReport true
-        textOutput 'stdout'
-        disable 'TimberTagLength'
-    }
     buildTypes {
         debug {
             minifyEnabled true
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
-            debuggable false
         }
     }
+    lint {
+        disable 'TimberTagLength'
+        textOutput file('stdout')
+        textReport true
+    }
 }
-afterEvaluate {
-    javadoc.classpath += files(android.libraryVariants.collect { variant ->
-        variant.javaCompiler.classpath.files
-    })
-}
+
 dependencies {
     implementation deps.support.annotations
 

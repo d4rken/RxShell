@@ -1,29 +1,18 @@
 buildscript {
     def versionMajor = 3
-    def versionMinor = 0
+    def versionMinor = 1
     def versionPatch = 0
 
     ext.versions = [
-            'versionCode'        : versionMajor * 10000 + versionMinor * 100 + versionPatch,
-            'versionName'        : "${versionMajor}.${versionMinor}.${versionPatch}",
-            'minSdk'             : 21,
-            'targetSdk'          : 28,
-            'compileSdk'         : 28,
+            'versionCode': versionMajor * 10000 + versionMinor * 100 + versionPatch,
+            'versionName': "${versionMajor}.${versionMinor}.${versionPatch}",
+            'minSdk'     : 21,
+            'targetSdk'  : 31,
+            'compileSdk' : 31,
             'sourceCompatibility': JavaVersion.VERSION_1_8,
             'targetCompatibility': JavaVersion.VERSION_1_8,
             'supportLibrary'     : '28.0.0',
-            'buildTools'         : '28.0.3'
     ]
-
-    def credentialsFile = new File(System.properties['user.home'], ".bintray/bintray.properties")
-    if (credentialsFile.canRead()) {
-        Properties props = new Properties()
-        props.load(new FileInputStream(credentialsFile))
-        ext.bintrayCredentials = [
-                bintrayUser  : props['bintray.user'],
-                bintrayApiKey: props['bintray.apikey']
-        ]
-    }
 
     ext.bintrayConfig = [
             bintrayRepo     : 'maven',
@@ -50,12 +39,12 @@ buildscript {
                     'annotations': "com.android.support:support-annotations:${versions.supportLibrary}",
                     'appcompat'  : "com.android.support:appcompat-v7:${versions.supportLibrary}"
             ],
-            androidPlugin: 'com.android.tools.build:gradle:3.1.2',
+            androidPlugin: 'com.android.tools.build:gradle:7.0.4',
             timber       : "com.jakewharton.timber:timber:4.7.1",
-            rxJava       : "io.reactivex.rxjava3:rxjava:3.0.4",
+            rxJava       : "io.reactivex.rxjava3:rxjava:3.1.3",
             rxJavaReplay : "com.jakewharton.rx3:replaying-share:3.0.0",
             jUnit        : "junit:junit:4.12",
-            mockito      : "org.mockito:mockito-core:2.8.9",
+            mockito      : "org.mockito:mockito-core:3.9.0",
             awaitility   : "org.awaitility:awaitility:3.0.0",
     ]
 
@@ -65,16 +54,16 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.1'
+        classpath 'com.android.tools.build:gradle:7.1.1'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
-        //noinspection GradleDependency
-        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.2'
     }
 }
 
+plugins {
+    id 'jacoco'
+    id 'com.github.kt3k.coveralls' version '2.12.0'
+}
 
-apply plugin: "com.github.kt3k.coveralls"
 apply plugin: 'java'
 
 allprojects {
@@ -93,9 +82,9 @@ subprojects { subProject ->
             html.enabled = true
         }
 
-        sourceDirectories = files(["${project.projectDir}/src/main/java"])
-        classDirectories = files([fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: exclude)])
-        executionData = fileTree(dir: "$project.buildDir", includes: [
+        sourceDirectories.from files(["${project.projectDir}/src/main/java"])
+        classDirectories.from files([fileTree(dir: "$project.buildDir/intermediates/classes/debug", excludes: exclude)])
+        executionData.from fileTree(dir: "$project.buildDir", includes: [
                 "jacoco/testDebugUnitTest.exec"
         ])
 
@@ -106,16 +95,9 @@ subprojects { subProject ->
         def isLibrary = subProject.plugins.hasPlugin('android-library')
 
         if (isLibrary) {
-            subProject.apply plugin: "com.github.dcendents.android-maven"
-            subProject.apply plugin: "com.jfrog.bintray"
-
             task javadoc(type: Javadoc) {
                 source = android.sourceSets.main.java.srcDirs
                 classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-            }
-
-            if (subProject.hasProperty('bintrayCredentials')) {
-                subProject.apply from: '../publish-to-bintray.gradle'
             }
         }
     }
@@ -127,10 +109,10 @@ task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
 
     dependsOn(publishedProjects.jacocoTestReport)
 
-    additionalSourceDirs = files(publishedProjects.sourceSets.main.allSource.srcDirs)
-    sourceDirectories = files(publishedProjects.jacocoTestReport.sourceDirectories)
-    classDirectories = files(publishedProjects.jacocoTestReport.classDirectories)
-    executionData = files(publishedProjects.jacocoTestReport.executionData)
+    additionalSourceDirs.from files(publishedProjects.sourceSets.main.allSource.srcDirs)
+    sourceDirectories.from files(publishedProjects.jacocoTestReport.sourceDirectories)
+    classDirectories.from files(publishedProjects.jacocoTestReport.classDirectories)
+    executionData.from files(publishedProjects.jacocoTestReport.executionData)
 
     reports {
         html.enabled = true
