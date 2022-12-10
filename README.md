@@ -1,6 +1,6 @@
 # RxShell
 
-![Build](https://github.com/d4rken/adsb-companion/actions/workflows/android.yml/badge.svg)
+![Build](https://github.com/d4rken/RxShell/actions/workflows/android.yml/badge.svg)
 [ ![Download](https://jitpack.io/v/d4rken/rxshell.svg)](https://jitpack.io/#d4rken/rxshell)
 [ ![Coverage Status](https://coveralls.io/repos/github/d4rken/RxShell/badge.svg?branch=master)](https://coveralls.io/github/d4rken/RxShell?branch=master)
 
